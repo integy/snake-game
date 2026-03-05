@@ -323,8 +323,8 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.2</span></h1>
-    <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3 | 💣 Bomb (-20)</div>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.3</span></h1>
+    <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3 | 💣 Bomb (-20) | ⚡🛡️🧲 Power-ups!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
@@ -854,19 +854,40 @@
             }
         }
         
+        // Power-up system
+        let powerUp = null;
+        let activePowerUp = null;
+        let powerUpEndTime = 0;
+        
         function spawnFood() {
-            // Random food type: 55% normal, 18% red, 12% blue, 5% gold, 10% bomb
+            // Random food type: 50% normal, 18% red, 12% blue, 5% gold, 10% bomb, 5% power-up
             const rand = Math.random();
-            if (rand < 0.55) {
+            if (rand < 0.50) {
                 foodType = 'normal';
-            } else if (rand < 0.73) {
+            } else if (rand < 0.68) {
                 foodType = 'red'; // 2x points
-            } else if (rand < 0.85) {
+            } else if (rand < 0.80) {
                 foodType = 'blue'; // slow down
-            } else if (rand < 0.90) {
+            } else if (rand < 0.85) {
                 foodType = 'gold'; // 3x points + bonus
-            } else {
+            } else if (rand < 0.95) {
                 foodType = 'bomb'; // lose points + stun
+            } else {
+                // Power-up spawns instead of regular food occasionally
+                const powerRand = Math.random();
+                if (powerRand < 0.33) {
+                    foodType = 'powerSpeed';
+                } else if (powerRand < 0.66) {
+                    foodType = 'powerShield';
+                } else {
+                    foodType = 'powerMagnet';
+                }
+            }
+            
+            // Don't spawn power-up if one already exists
+            if (powerUp && foodType.startsWith('power')) {
+                foodType = 'normal';
+                rand = 0.5;
             }
             
             food = {
@@ -882,6 +903,59 @@
             }
         }
         
+        function activatePowerUp(type) {
+            const duration = 5000; // 5 seconds
+            activePowerUp = type;
+            powerUpEndTime = Date.now() + duration;
+            
+            // Update UI to show active power-up
+            const hint = document.getElementById('modeHint');
+            const originalHint = hint.textContent;
+            
+            let powerText = '';
+            switch(type) {
+                case 'powerSpeed': powerText = '⚡ SUPER SPEED!'; break;
+                case 'powerShield': powerText = '🛡️ GHOST MODE!'; break;
+                case 'powerMagnet': powerText = '🧲 FOOD MAGNET!'; break;
+            }
+            
+            hint.textContent = powerText + ' (5s)';
+            hint.style.color = '#ffd700';
+            
+            // Apply power-up effect
+            if (type === 'powerSpeed') {
+                currentSpeed = Math.floor(currentSpeed * 0.5);
+                if (gameLoop) clearInterval(gameLoop);
+                gameLoop = setInterval(update, currentSpeed);
+            } else if (type === 'powerShield') {
+                // Will be handled in collision check
+            } else if (type === 'powerMagnet') {
+                // Will be handled in update loop
+            }
+            
+            // Play power-up sound
+            playSound('eatGold');
+            
+            // Create particles
+            for (let i = 0; i < 20; i++) {
+                createParticles(snake[0].x, snake[0].y, '#ffd700');
+            }
+            
+            // Set timeout to deactivate
+            setTimeout(() => {
+                activePowerUp = null;
+                hint.textContent = originalHint;
+                hint.style.color = '';
+                
+                // Reset speed if was speed power-up
+                if (type === 'powerSpeed') {
+                    currentSpeed = Math.min(currentSpeed * 2, 150);
+                    if (gameLoop) clearInterval(gameLoop);
+                    gameLoop = setInterval(update, currentSpeed);
+                }
+            }, duration);
+        }
+        
         function update() {
             if (isPaused || isGameOver) return;
             
@@ -891,8 +965,10 @@
             let head = { x: snake[0].x + dx, y: snake[0].y + dy };
             
             // Handle wall collision based on mode
-            if (gameMode === 'zen') {
-                // Wrap around in Zen mode
+            const hasShield = activePowerUp === 'powerShield';
+            
+            if (gameMode === 'zen' || hasShield) {
+                // Wrap around in Zen mode or when shielded
                 if (head.x < 0) head.x = tileCount - 1;
                 if (head.x >= tileCount) head.x = 0;
                 if (head.y < 0) head.y = tileCount - 1;
@@ -905,13 +981,27 @@
                 }
             }
             
-            // Self collision - die in timer/classic, ignore in zen
-            if (gameMode !== 'zen') {
+            // Self collision - die in timer/classic, ignore in zen or when shielded
+            if (gameMode !== 'zen' && !hasShield) {
                 for (let part of snake) {
                     if (head.x === part.x && head.y === part.y) {
                         gameOver();
                         return;
                     }
+                }
+            } else if (gameMode !== 'zen' && hasShield) {
+                // Shield mode - just don't grow if hitting self
+                let hitSelf = false;
+                for (let i = 1; i < snake.length; i++) {
+                    if (head.x === snake[i].x && head.y === snake[i].y) {
+                        hitSelf = true;
+                        break;
+                    }
+                }
+                if (hitSelf) {
+                    dx = 0;
+                    dy = 0;
+                    return;
                 }
             } else {
                 // In zen mode, just don't grow if hitting self
@@ -931,6 +1021,23 @@
             }
             
             snake.unshift(head);
+            
+            // Magnet effect - move food toward snake
+            if (activePowerUp === 'powerMagnet' && (head.x !== food.x || head.y !== food.y)) {
+                const dxMagnet = Math.sign(head.x - food.x);
+                const dyMagnet = Math.sign(head.y - food.y);
+                // Move food 1 tile closer to snake
+                if (dxMagnet !== 0) food.x += dxMagnet;
+                if (dyMagnet !== 0) food.y += dyMagnet;
+                // Check if now on snake body - if so, move away
+                for (let part of snake) {
+                    if (food.x === part.x && food.y === part.y) {
+                        food.x -= dxMagnet;
+                        food.y -= dyMagnet;
+                        break;
+                    }
+                }
+            }
             
             if (head.x === food.x && head.y === food.y) {
                 // Handle different food types
@@ -961,6 +1068,18 @@
                                 dy = savedDy;
                             }
                         }, 1000);
+                        break;
+                    case 'powerSpeed': // Super speed!
+                        points = 0;
+                        activatePowerUp('powerSpeed');
+                        break;
+                    case 'powerShield': // Ghost mode!
+                        points = 0;
+                        activatePowerUp('powerShield');
+                        break;
+                    case 'powerMagnet': // Magnet!
+                        points = 0;
+                        activatePowerUp('powerMagnet');
                         break;
                     case 'normal':
                     default:
@@ -1075,6 +1194,18 @@
                     foodColor = '#555555'; // Grey - lose points + stun
                     foodGlow = '#ff0000'; // Red glow for danger
                     break;
+                case 'powerSpeed':
+                    foodColor = '#ff6b35'; // Orange - speed
+                    foodGlow = '#ff6b35';
+                    break;
+                case 'powerShield':
+                    foodColor = '#a855f7'; // Purple - shield
+                    foodGlow = '#a855f7';
+                    break;
+                case 'powerMagnet':
+                    foodColor = '#ec4899'; // Pink - magnet
+                    foodGlow = '#ec4899';
+                    break;
                 case 'normal':
                 default:
                     foodColor = '#2ed573'; // Green - normal
@@ -1095,6 +1226,21 @@
                 ctx.moveTo(food.x * gridSize + gridSize - 4, food.y * gridSize + 4);
                 ctx.lineTo(food.x * gridSize + 4, food.y * gridSize + gridSize - 4);
                 ctx.stroke();
+            } else if (foodType.startsWith('power')) {
+                // Draw power-up with symbol
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 1, 0, Math.PI * 2);
+                ctx.fill();
+                // Draw symbol
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                let symbol = '';
+                if (foodType === 'powerSpeed') symbol = '⚡';
+                else if (foodType === 'powerShield') symbol = '🛡️';
+                else if (foodType === 'powerMagnet') symbol = '🧲';
+                ctx.fillText(symbol, food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
             } else {
                 ctx.beginPath();
                 ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
