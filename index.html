@@ -268,13 +268,14 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v2.0</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v3.0</span></h1>
     <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3</div>
     <div class="subtitle">Eat food to speed up! Every food = +20% faster!</div>
     
     <div class="stats">
         <div class="stat">Score: <span id="score">0</span></div>
-        <div class="stat">Speed: <span id="speed">100%</span></div>
+        <div class="stat">Speed: <span id="speed">100ms</span></div>
+        <div class="stat">Time: <span id="timer">60</span>s</div>
         <div class="stat">Player: <span id="playerName">-</span></div>
     </div>
     
@@ -445,6 +446,8 @@
         let isPaused = false;
         let isGameOver = false;
         let playerName = '';
+        let timeLeft = 60; // 60 second timer
+        let timerLoop = null;
         
         // Load leaderboard on page load
         window.onload = () => {
@@ -581,15 +584,29 @@
             dx = 1;
             dy = 0;
             score = 0;
+            timeLeft = 60; // Reset timer to 60 seconds
             currentSpeed = 100; // Reset speed
             isPaused = false;
             isGameOver = false;
             document.getElementById('score').textContent = score;
             document.getElementById('speed').textContent = currentSpeed + 'ms';
+            document.getElementById('timer').textContent = timeLeft;
             spawnFood();
             
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(update, currentSpeed);
+            
+            // Start countdown timer
+            if (timerLoop) clearInterval(timerLoop);
+            timerLoop = setInterval(() => {
+                if (!isPaused && !isGameOver) {
+                    timeLeft--;
+                    document.getElementById('timer').textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        gameOver(); // Time's up!
+                    }
+                }
+            }, 1000);
         }
         
         function spawnFood() {
@@ -746,6 +763,7 @@
         async function gameOver() {
             isGameOver = true;
             if (gameLoop) clearInterval(gameLoop);
+            if (timerLoop) clearInterval(timerLoop);
             
             // Check if high score
             const scores = JSON.parse(localStorage.getItem('snakeOnlineScores') || '[]');
