@@ -268,7 +268,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v3.0</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v4.0</span></h1>
     <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3</div>
     <div class="subtitle">Eat food to speed up! Every food = +20% faster!</div>
     
@@ -448,6 +448,48 @@
         let playerName = '';
         let timeLeft = 60; // 60 second timer
         let timerLoop = null;
+        
+        // Sound effects using Web Audio API
+        let audioCtx = null;
+        
+        function playSound(type) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                switch(type) {
+                    case 'eat':
+                        oscillator.frequency.value = 800;
+                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                        oscillator.start(audioCtx.currentTime);
+                        oscillator.stop(audioCtx.currentTime + 0.1);
+                        break;
+                    case 'eatGold':
+                        oscillator.frequency.value = 1200;
+                        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                        oscillator.start(audioCtx.currentTime);
+                        oscillator.stop(audioCtx.currentTime + 0.2);
+                        break;
+                    case 'gameOver':
+                        oscillator.frequency.value = 300;
+                        oscillator.type = 'sawtooth';
+                        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                        oscillator.start(audioCtx.currentTime);
+                        oscillator.stop(audioCtx.currentTime + 0.5);
+                        break;
+                }
+            } catch(e) {
+                // Audio not supported or blocked
+            }
+        }
         
         // Load leaderboard on page load
         window.onload = () => {
@@ -676,6 +718,13 @@
                 
                 score += points;
                 
+                // Play sound based on food type
+                if (foodType === 'gold') {
+                    playSound('eatGold');
+                } else {
+                    playSound('eat');
+                }
+                
                 // Apply speed change
                 const oldSpeed = currentSpeed;
                 currentSpeed = Math.floor(currentSpeed * speedMultiplier);
@@ -764,6 +813,7 @@
             isGameOver = true;
             if (gameLoop) clearInterval(gameLoop);
             if (timerLoop) clearInterval(timerLoop);
+            playSound('gameOver');
             
             // Check if high score
             const scores = JSON.parse(localStorage.getItem('snakeOnlineScores') || '[]');
