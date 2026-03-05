@@ -264,13 +264,34 @@
             to { text-shadow: 0 0 30px #ffd700; }
         }
 
+        .mode-btn {
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .mode-btn:hover {
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .mode-btn.active {
+            background: #00ff88;
+            color: #1a1a2e;
+        }
+
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v6.0</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.0</span></h1>
     <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3</div>
-    <div class="subtitle">Eat food to speed up! Every food = +20% faster!</div>
+    <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
     <div style="margin: 10px 0;">
@@ -410,6 +431,16 @@
             <h2>🎮 Welcome!</h2>
             <p style="margin-bottom: 20px; color: #888;">Enter your name to play and compete on the leaderboard</p>
             <input type="text" id="playerNameInput" placeholder="Your name" maxlength="15" autocomplete="off">
+            
+            <div style="margin-bottom: 20px;">
+                <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;">Select Game Mode:</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="mode-btn active" onclick="selectMode('timer', this)" data-mode="timer">⏱️ Timer</button>
+                    <button class="mode-btn" onclick="selectMode('classic', this)" data-mode="classic">💀 Classic</button>
+                    <button class="mode-btn" onclick="selectMode('zen', this)" data-mode="zen">🧘 Zen</button>
+                </div>
+            </div>
+            
             <button id="startBtn" onclick="startGame()">START GAME</button>
             
             <div class="leaderboard">
@@ -460,9 +491,26 @@
         let playerName = '';
         let timeLeft = 60; // 60 second timer
         let timerLoop = null;
+        let gameMode = 'timer'; // timer, classic, zen
+        let lastEatTime = 0;
+        let comboCount = 0;
         
         // Particle effects
         let particles = [];
+
+        function selectMode(mode, btn) {
+            gameMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update hint text
+            const hints = {
+                'timer': '⏱️ Timer: 60s to score as high as you can!',
+                'classic': '💀 Classic: No timer, die on wall/self collision!',
+                'zen': '🧘 Zen: No death, just relax and grow!'
+            };
+            document.getElementById('modeHint').textContent = hints[mode];
+        }
         
         function setSnakeColor(color) {
             snakeColor = color;
@@ -682,30 +730,50 @@
             dx = 1;
             dy = 0;
             score = 0;
-            timeLeft = 60; // Reset timer to 60 seconds
             currentSpeed = 100; // Reset speed
             particles = []; // Reset particles
+            comboCount = 0;
             isPaused = false;
             isGameOver = false;
             document.getElementById('score').textContent = score;
             document.getElementById('speed').textContent = currentSpeed + 'ms';
-            document.getElementById('timer').textContent = timeLeft;
+            
+            // Handle timer display based on mode
+            const timerEl = document.getElementById('timer');
+            if (gameMode === 'timer') {
+                timeLeft = 60;
+                timerEl.textContent = timeLeft;
+                timerEl.parentElement.style.display = 'block';
+            } else if (gameMode === 'classic') {
+                timeLeft = 999;
+                timerEl.textContent = '∞';
+                timerEl.parentElement.style.display = 'block';
+            } else { // zen
+                timeLeft = 999;
+                timerEl.textContent = '∞';
+                timerEl.parentElement.style.display = 'none';
+            }
+            
             spawnFood();
             
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(update, currentSpeed);
             
-            // Start countdown timer
+            // Start countdown timer (only for timer mode)
             if (timerLoop) clearInterval(timerLoop);
-            timerLoop = setInterval(() => {
-                if (!isPaused && !isGameOver) {
-                    timeLeft--;
-                    document.getElementById('timer').textContent = timeLeft;
-                    if (timeLeft <= 0) {
-                        gameOver(); // Time's up!
+            if (gameMode === 'timer') {
+                timerLoop = setInterval(() => {
+                    if (!isPaused && !isGameOver) {
+                        timeLeft--;
+                        document.getElementById('timer').textContent = timeLeft;
+                        if (timeLeft <= 0) {
+                            gameOver(); // Time's up!
+                        }
                     }
-                }
-            }, 1000);
+                }, 1000);
+            } else {
+                timerLoop = null;
+            }
         }
         
         function spawnFood() {
@@ -740,16 +808,44 @@
             // Update particles
             updateParticles();
             
-            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            let head = { x: snake[0].x + dx, y: snake[0].y + dy };
             
-            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-                gameOver();
-                return;
+            // Handle wall collision based on mode
+            if (gameMode === 'zen') {
+                // Wrap around in Zen mode
+                if (head.x < 0) head.x = tileCount - 1;
+                if (head.x >= tileCount) head.x = 0;
+                if (head.y < 0) head.y = tileCount - 1;
+                if (head.y >= tileCount) head.y = 0;
+            } else {
+                // Die on wall in timer/classic mode
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    gameOver();
+                    return;
+                }
             }
             
-            for (let part of snake) {
-                if (head.x === part.x && head.y === part.y) {
-                    gameOver();
+            // Self collision - die in timer/classic, ignore in zen
+            if (gameMode !== 'zen') {
+                for (let part of snake) {
+                    if (head.x === part.x && head.y === part.y) {
+                        gameOver();
+                        return;
+                    }
+                }
+            } else {
+                // In zen mode, just don't grow if hitting self
+                let hitSelf = false;
+                for (let i = 1; i < snake.length; i++) {
+                    if (head.x === snake[i].x && head.y === snake[i].y) {
+                        hitSelf = true;
+                        break;
+                    }
+                }
+                if (hitSelf) {
+                    // Just don't move - halt
+                    dx = 0;
+                    dy = 0;
                     return;
                 }
             }
