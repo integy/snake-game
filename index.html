@@ -268,9 +268,20 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v5.0</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v6.0</span></h1>
     <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3</div>
     <div class="subtitle">Eat food to speed up! Every food = +20% faster!</div>
+    
+    <!-- Snake Color Selector -->
+    <div style="margin: 10px 0;">
+        <span style="color: #888; margin-right: 10px;">Snake:</span>
+        <button class="color-btn" onclick="setSnakeColor('#00ff88')" style="background: #00ff88; border: 2px solid #00ff88; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
+        <button class="color-btn" onclick="setSnakeColor('#ff4757')" style="background: #ff4757; border: 2px solid #ff4757; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
+        <button class="color-btn" onclick="setSnakeColor('#3498db')" style="background: #3498db; border: 2px solid #3498db; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
+        <button class="color-btn" onclick="setSnakeColor('#ffd700')" style="background: #ffd700; border: 2px solid #ffd700; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
+        <button class="color-btn" onclick="setSnakeColor('#9b59b6')" style="background: #9b59b6; border: 2px solid #9b59b6; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
+        <button class="color-btn" onclick="setSnakeColor('#ff6b81')" style="background: #ff6b81; border: 2px solid #ff6b81; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
+    </div>
     
     <div class="stats">
         <div class="stat">Score: <span id="score">0</span></div>
@@ -443,6 +454,7 @@
         let score = 0;
         let gameLoop = null;
         let currentSpeed = 100; // Initial speed in ms (lower = faster)
+        let snakeColor = '#00ff88'; // Default snake color
         let isPaused = false;
         let isGameOver = false;
         let playerName = '';
@@ -451,6 +463,11 @@
         
         // Particle effects
         let particles = [];
+        
+        function setSnakeColor(color) {
+            snakeColor = color;
+            draw();
+        }
         
         function createParticles(x, y, color) {
             for (let i = 0; i < 10; i++) {
@@ -848,15 +865,15 @@
                 );
                 
                 if (index === 0) {
-                    gradient.addColorStop(0, '#00ff88');
-                    gradient.addColorStop(1, '#00cc6a');
+                    gradient.addColorStop(0, snakeColor);
+                    gradient.addColorStop(1, snakeColor);
                 } else {
-                    gradient.addColorStop(0, '#00cc6a');
-                    gradient.addColorStop(1, '#009950');
+                    gradient.addColorStop(0, snakeColor);
+                    gradient.addColorStop(1, snakeColor);
                 }
                 
                 ctx.fillStyle = gradient;
-                ctx.shadowColor = '#00ff88';
+                ctx.shadowColor = snakeColor;
                 ctx.shadowBlur = index === 0 ? 15 : 5;
                 ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
                 ctx.shadowBlur = 0;
