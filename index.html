@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐍 Snake Online</title>
+    <title>🐍 Hentai Snake</title>
     <style>
         * {
             margin: 0;
@@ -268,11 +268,13 @@
     </style>
 </head>
 <body>
-    <h1>🐍 SNAKE ONLINE</h1>
+    <h1>🐍 HENTAI SNAKE</h1>
+    <div class="subtitle">Eat food to speed up! Every food = +20% faster!</div>
     <div class="subtitle">Play with players worldwide!</div>
     
     <div class="stats">
         <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat">Speed: <span id="speed">100%</span></div>
         <div class="stat">Player: <span id="playerName">-</span></div>
     </div>
     
@@ -438,6 +440,7 @@
         let dy = 0;
         let score = 0;
         let gameLoop = null;
+        let currentSpeed = 100; // Initial speed in ms (lower = faster)
         let isPaused = false;
         let isGameOver = false;
         let playerName = '';
@@ -577,13 +580,15 @@
             dx = 1;
             dy = 0;
             score = 0;
+            currentSpeed = 100; // Reset speed
             isPaused = false;
             isGameOver = false;
             document.getElementById('score').textContent = score;
+            document.getElementById('speed').textContent = '100%';
             spawnFood();
             
             if (gameLoop) clearInterval(gameLoop);
-            gameLoop = setInterval(update, 100);
+            gameLoop = setInterval(update, currentSpeed);
         }
         
         function spawnFood() {
@@ -620,7 +625,12 @@
             
             if (head.x === food.x && head.y === food.y) {
                 score += 10;
+                // Increase speed by 20% for each food eaten
+                currentSpeed = Math.max(20, currentSpeed * 0.8); // Cap at 20ms (max speed)
+                if (gameLoop) clearInterval(gameLoop);
+                gameLoop = setInterval(update, currentSpeed);
                 document.getElementById('score').textContent = score;
+                document.getElementById('speed').textContent = Math.round((100/currentSpeed) * 100) + '%';
                 spawnFood();
             } else {
                 snake.pop();
