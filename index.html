@@ -625,14 +625,12 @@
             
             if (head.x === food.x && head.y === food.y) {
                 score += 10;
-                // Increase speed by 20% for each food eaten
+                // Increase speed by 20% for each food eaten (NO CAP)
                 const oldSpeed = currentSpeed;
-                currentSpeed = Math.max(20, Math.floor(currentSpeed * 0.8));
-                // Only restart if speed actually changed
-                if (currentSpeed !== oldSpeed) {
-                    if (gameLoop) clearInterval(gameLoop);
-                    gameLoop = setInterval(update, currentSpeed);
-                }
+                currentSpeed = Math.floor(currentSpeed * 0.8);
+                // Restart game loop with new speed
+                if (gameLoop) clearInterval(gameLoop);
+                gameLoop = setInterval(update, currentSpeed);
                 document.getElementById('score').textContent = score;
                 document.getElementById('speed').textContent = currentSpeed + 'ms';
                 spawnFood();
