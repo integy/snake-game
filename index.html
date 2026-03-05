@@ -324,7 +324,7 @@
 </head>
 <body>
     <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.2</span></h1>
-    <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3</div>
+    <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3 | 💣 Bomb (-20)</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
@@ -855,16 +855,18 @@
         }
         
         function spawnFood() {
-            // Random food type: 60% normal, 20% red, 15% blue, 5% gold
+            // Random food type: 55% normal, 18% red, 12% blue, 5% gold, 10% bomb
             const rand = Math.random();
-            if (rand < 0.60) {
+            if (rand < 0.55) {
                 foodType = 'normal';
-            } else if (rand < 0.80) {
+            } else if (rand < 0.73) {
                 foodType = 'red'; // 2x points
-            } else if (rand < 0.95) {
+            } else if (rand < 0.85) {
                 foodType = 'blue'; // slow down
-            } else {
+            } else if (rand < 0.90) {
                 foodType = 'gold'; // 3x points + bonus
+            } else {
+                foodType = 'bomb'; // lose points + stun
             }
             
             food = {
@@ -945,6 +947,21 @@
                     case 'gold': // 3x points + bonus
                         points = 30;
                         break;
+                    case 'bomb': // Lose points + stun!
+                        points = -20;
+                        speedMultiplier = 2; // Slow down a lot
+                        // Stun the snake for 1 second
+                        const savedDx = dx;
+                        const savedDy = dy;
+                        dx = 0;
+                        dy = 0;
+                        setTimeout(() => {
+                            if (!isGameOver) {
+                                dx = savedDx;
+                                dy = savedDy;
+                            }
+                        }, 1000);
+                        break;
                     case 'normal':
                     default:
                         points = 10;
@@ -987,6 +1004,7 @@
                     case 'red': particleColor = '#ff4757'; break;
                     case 'blue': particleColor = '#3498db'; break;
                     case 'gold': particleColor = '#ffd700'; break;
+                    case 'bomb': particleColor = '#888888'; break;
                     default: particleColor = '#2ed573';
                 }
                 createParticles(food.x, food.y, particleColor);
@@ -994,6 +1012,8 @@
                 // Play sound based on food type
                 if (foodType === 'gold') {
                     playSound('eatGold');
+                } else if (foodType === 'bomb') {
+                    playSound('gameOver');
                 } else {
                     playSound('eat');
                 }
@@ -1051,6 +1071,10 @@
                     foodColor = '#ffd700'; // Gold - 3x points
                     foodGlow = '#ffd700';
                     break;
+                case 'bomb':
+                    foodColor = '#555555'; // Grey - lose points + stun
+                    foodGlow = '#ff0000'; // Red glow for danger
+                    break;
                 case 'normal':
                 default:
                     foodColor = '#2ed573'; // Green - normal
@@ -1059,9 +1083,23 @@
             ctx.fillStyle = foodColor;
             ctx.shadowColor = foodGlow;
             ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
-            ctx.fill();
+            // Draw bomb as a square (danger!)
+            if (foodType === 'bomb') {
+                ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
+                // Draw X on bomb
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(food.x * gridSize + 4, food.y * gridSize + 4);
+                ctx.lineTo(food.x * gridSize + gridSize - 4, food.y * gridSize + gridSize - 4);
+                ctx.moveTo(food.x * gridSize + gridSize - 4, food.y * gridSize + 4);
+                ctx.lineTo(food.x * gridSize + 4, food.y * gridSize + gridSize - 4);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.shadowBlur = 0;
             
             // Snake
