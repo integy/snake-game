@@ -268,7 +268,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v4.0</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v5.0</span></h1>
     <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3</div>
     <div class="subtitle">Eat food to speed up! Every food = +20% faster!</div>
     
@@ -449,6 +449,45 @@
         let timeLeft = 60; // 60 second timer
         let timerLoop = null;
         
+        // Particle effects
+        let particles = [];
+        
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x * gridSize + gridSize/2,
+                    y: y * gridSize + gridSize/2,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+        
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.05;
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4 * p.life, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+        }
+        
         // Sound effects using Web Audio API
         let audioCtx = null;
         
@@ -628,6 +667,7 @@
             score = 0;
             timeLeft = 60; // Reset timer to 60 seconds
             currentSpeed = 100; // Reset speed
+            particles = []; // Reset particles
             isPaused = false;
             isGameOver = false;
             document.getElementById('score').textContent = score;
@@ -680,6 +720,9 @@
         function update() {
             if (isPaused || isGameOver) return;
             
+            // Update particles
+            updateParticles();
+            
             const head = { x: snake[0].x + dx, y: snake[0].y + dy };
             
             if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
@@ -718,6 +761,16 @@
                 
                 score += points;
                 
+                // Create particle effect based on food type
+                let particleColor;
+                switch(foodType) {
+                    case 'red': particleColor = '#ff4757'; break;
+                    case 'blue': particleColor = '#3498db'; break;
+                    case 'gold': particleColor = '#ffd700'; break;
+                    default: particleColor = '#2ed573';
+                }
+                createParticles(food.x, food.y, particleColor);
+                
                 // Play sound based on food type
                 if (foodType === 'gold') {
                     playSound('eatGold');
@@ -739,6 +792,7 @@
             }
             
             draw();
+            drawParticles();
         }
         
         function draw() {
