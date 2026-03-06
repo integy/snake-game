@@ -376,7 +376,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.7</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.8</span></h1>
     <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
@@ -391,6 +391,7 @@
         <button class="color-btn" onclick="setSnakeColor('#ff6b81')" style="background: #ff6b81; border: 2px solid #ff6b81; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
         <span style="color: #888; margin-left: 20px; margin-right: 10px;">🔊</span>
         <button id="musicBtn" onclick="toggleMusic()" style="background: rgba(0, 255, 136, 0.2); border: 2px solid #00ff88; color: #00ff88; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem;">🎵 Music: ON</button>
+        <button onclick="showHelp()" style="background: rgba(255, 200, 0, 0.2); border: 2px solid #ffc800; color: #ffc800; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; margin-left: 10px;">❓ Help</button>
     </div>
     
     <div class="stats">
@@ -550,6 +551,51 @@
         <p style="font-size: 1.5rem; margin-bottom: 10px;">Score: <span id="finalScore">0</span></p>
         <p id="highScoreMsg" style="color: #ffd700; margin-bottom: 20px; display: none;">🏆 New High Score!</p>
         <button onclick="showStartModal()">Play Again</button>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="color: #00ff88; margin-bottom: 20px;">📖 遊戲說明</h2>
+            
+            <div style="text-align: left; color: #ccc; font-size: 0.95rem; line-height: 1.6;">
+                <h3 style="color: #ffd700; margin-top: 15px;">🎮 操作</h3>
+                <p>⬆️⬇️⬅️➡️ 方向鍵 或 WASD 移動</p>
+                <p>Space 暫停遊戲</p>
+                
+                <h3 style="color: #ffd700; margin-top: 15px;">🏆 遊戲模式</h3>
+                <p><strong>⏱️ Timer</strong> - 60秒限時，攞最高分</p>
+                <p><strong>💀 Classic</strong> - 無限時間，撞牆/撞自己會死</p>
+                <p><strong>🧘 Zen</strong> - 輕鬆模式，無限時間，唔會死</p>
+                
+                <h3 style="color: #ffd700; margin-top: 15px;">🍎 食物同道具</h3>
+                <p>🍏 <strong>Normal</strong> (+10分) - 普通食物</p>
+                <p>🔴 <strong>Red</strong> (+20分) - 2倍分數</p>
+                <p>🔵 <strong>Blue</strong> - 減慢速度</p>
+                <p>🟡 <strong>Gold</strong> (+30分) - 3倍分數</p>
+                <p>💣 <strong>Bomb</strong> (-20分 + 暈眩) - 炸彈</p>
+                <p>🌀 <strong>Teleport</strong> - 隨機傳送</p>
+                <p>❄️ <strong>Time Freeze</strong> - 暫停計時5秒</p>
+                
+                <h3 style="color: #ffd700; margin-top: 15px;">⚡ Power-Ups (5秒)</h3>
+                <p>⚡ <strong>Speed</strong> - 加速</p>
+                <p>🛡️ <strong>Shield</strong> - 無敵 (穿牆/撞自己)</p>
+                <p>🧲 <strong>Magnet</strong> - 食物自動吸過嚟</p>
+                
+                <h3 style="color: #ffd700; margin-top: 15px;">🎯 升級系統</h3>
+                <p>每100分升1 Level，速度會越來越快！</p>
+                
+                <h3 style="color: #ffd700; margin-top: 15px;">🏅 Achievements</h3>
+                <p>🌟 First Gold - 第一次食金色食物</p>
+                <p>🔥 Combo 5x - Combo 去到5倍</p>
+                <p>⚡ Speed Demon - 升到 Level 5</p>
+                <p>💣 Bomb Survivor - 一場波撞3次炸彈</p>
+                <p>👑 Perfect Game - 攞到500+分</p>
+                <p>🧘 Zen Master - Zen mode 玩60秒</p>
+            </div>
+            
+            <button onclick="closeHelp()" style="margin-top: 20px; background: #00ff88; color: #1a1a2e; border: none; padding: 15px 40px; font-size: 1.2rem; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: bold;">關閉</button>
+        </div>
     </div>
 
     <script>
@@ -953,6 +999,14 @@
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('startModal').style.display = 'flex';
             loadLeaderboard();
+        }
+        
+        function showHelp() {
+            document.getElementById('helpModal').style.display = 'flex';
+        }
+        
+        function closeHelp() {
+            document.getElementById('helpModal').style.display = 'none';
         }
         
         function startGame() {
