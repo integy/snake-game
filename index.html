@@ -80,6 +80,9 @@
         let powerUp = null, powerTimer = null;
         let speedBoost = false, shield = false;
         
+        // Visual effects
+        let animFrame = 0;
+        
         // Local storage for high scores
         let highScores = JSON.parse(localStorage.getItem('snakeHighScores') || '[]');
         
@@ -195,6 +198,7 @@
         }
         
         function draw() {
+            animFrame++;
             ctx.fillStyle='#000'; ctx.fillRect(0,0,300,300);
             
             ctx.strokeStyle='rgba(0,255,0,0.08)';
@@ -204,19 +208,32 @@
             for(let o of obstacles) ctx.fillRect(o.x*gs+1,o.y*gs+1,gs-2,gs-2);
             ctx.shadowBlur=0;
             
-            ctx.shadowBlur=12;
+            // Pulsing food effect
+            const pulse = 1 + Math.sin(animFrame * 0.15) * 0.2;
+            const foodSize = (gs-4) * pulse;
+            const foodOffset = ((gs-4) - foodSize) / 2;
+            
+            ctx.shadowBlur=12 + Math.sin(animFrame * 0.1) * 8;
             if(ft==='red'){ctx.fillStyle='#f44';ctx.shadowColor='#f44';}
             else if(ft==='gold'){ctx.fillStyle='#fd0';ctx.shadowColor='#fd0';}
             else if(ft==='bomb'){ctx.fillStyle='#f00';ctx.shadowColor='#f00';}
             else if(ft==='speed'){ctx.fillStyle='#ff0';ctx.shadowColor='#ff0';}
             else if(ft==='shield'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff';}
             else{ctx.fillStyle='#0f0';ctx.shadowColor='#0f0';}
-            ctx.fillRect(f.x*gs+2,f.y*gs+2,gs-4,gs-4);
+            ctx.fillRect(f.x*gs+2+foodOffset,f.y*gs+2+foodOffset,foodSize,foodSize);
             ctx.shadowBlur=0;
             
+            // Snake with wave glow effect
             ctx.shadowBlur=shield?15:8;
             ctx.shadowColor=shield?'#0ff':'#0f0';
-            for(let i=0;i<s.length;i++){ctx.globalAlpha=i===0?1:0.7;ctx.fillStyle=shield?'#0ff':'#0f0';ctx.fillRect(s[i].x*gs+1,s[i].y*gs+1,gs-2,gs-2);}
+            for(let i=0;i<s.length;i++){
+                const wave = Math.sin(animFrame * 0.1 + i * 0.5) * 0.15 + 1;
+                const size = (gs-2) * wave;
+                const offset = ((gs-2) - size) / 2;
+                ctx.globalAlpha=i===0?1:(0.5 + Math.sin(animFrame * 0.08 + i * 0.3) * 0.3);
+                ctx.fillStyle=shield?'#0ff':'#0f0';
+                ctx.fillRect(s[i].x*gs+1+offset,s[i].y*gs+1+offset,size,size);
+            }
             ctx.globalAlpha=1; ctx.shadowBlur=0;
             
             drawParticles();
