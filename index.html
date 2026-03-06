@@ -321,6 +321,41 @@
             animation: screenShake 0.5s ease-out;
         }
 
+        /* Achievement notification */
+        .achievement-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: #ffd700;
+            font-weight: bold;
+            z-index: 2000;
+            animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .achievement-title {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .achievement-name {
+            font-size: 1.1rem;
+        }
+
         /* Score popup */
         .score-popup {
             position: absolute;
@@ -341,7 +376,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.5</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.6</span></h1>
     <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
@@ -553,6 +588,18 @@
         let gameLevel = 1;
         let lastLevelScore = 0;
         
+        // Achievements system
+        let achievements = {
+            firstGold: { name: "🌟 First Gold", desc: "Eat your first gold food", unlocked: false },
+            combo5: { name: "🔥 Combo 5x", desc: "Get a 5x combo", unlocked: false },
+            speedDemon: { name: "⚡ Speed Demon", desc: "Reach level 5", unlocked: false },
+            bombSurvivor: { name: "💣 Bomb Survivor", desc: "Get hit by 3 bombs in one game", unlocked: false },
+            perfectGame: { name: "👑 Perfect Game", desc: "Score over 500 points", unlocked: false },
+            zenMaster: { name: "🧘 Zen Master", desc: "Play Zen mode for 60 seconds", unlocked: false }
+        };
+        let bombsHit = 0;
+        let zenTime = 0;
+        
         // Particle effects
         let particles = [];
         
@@ -567,6 +614,26 @@
                 canvas.classList.remove('shake');
                 shakeIntensity = 0;
             }, 300);
+        }
+        
+        function unlockAchievement(key) {
+            if (achievements[key] && !achievements[key].unlocked) {
+                achievements[key].unlocked = true;
+                showAchievementNotification(achievements[key]);
+                playSound('eatGold');
+            }
+        }
+        
+        function showAchievementNotification(achievement) {
+            const notif = document.createElement('div');
+            notif.className = 'achievement-notification';
+            notif.innerHTML = `
+                <div class="achievement-title">🏆 Achievement Unlocked!</div>
+                <div class="achievement-name">${achievement.name}</div>
+                <div style="font-size: 0.8rem; color: #888;">${achievement.desc}</div>
+            `;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
         }
         
         function applyShake() {
@@ -853,6 +920,11 @@
             lastEatTime = 0;
             gameLevel = 1;
             lastLevelScore = 0;
+            
+            // Reset achievement tracking
+            bombsHit = 0;
+            zenTime = 0;
+            
             if (comboTimeout) clearTimeout(comboTimeout);
             document.getElementById('combo').textContent = 'x1';
             document.getElementById('comboStat').style.display = 'none';
@@ -1207,11 +1279,14 @@
                     case 'gold': // 3x points + bonus
                         points = 30;
                         screenShake(0.5); // Medium shake for gold!
+                        unlockAchievement('firstGold');
                         break;
                     case 'bomb': // Lose points + stun!
                         points = -20;
                         speedMultiplier = 2; // Slow down a lot
                         screenShake(1); // Big shake for bomb!
+                        bombsHit++;
+                        if (bombsHit >= 3) unlockAchievement('bombSurvivor');
                         // Stun the snake for 1 second
                         const savedDx = dx;
                         const savedDy = dy;
@@ -1254,6 +1329,7 @@
                 if (now - lastEatTime < 2000 && lastEatTime > 0) {
                     comboCount++;
                     comboMultiplier = Math.min(comboCount, 5); // Max 5x
+                    if (comboMultiplier >= 5) unlockAchievement('combo5');
                     // Show combo particles
                     for (let i = 0; i < 5; i++) {
                         createParticles(food.x, food.y, '#ffd700');
@@ -1305,6 +1381,9 @@
                     
                     playSound('eatGold');
                     
+                    // Check level achievements
+                    if (gameLevel >= 5) unlockAchievement('speedDemon');
+                    
                     setTimeout(() => {
                         hint.style.color = '';
                     }, 1500);
@@ -1339,6 +1418,9 @@
                 
                 document.getElementById('score').textContent = score;
                 document.getElementById('speed').textContent = currentSpeed + 'ms';
+                
+                // Check score achievements
+                if (score >= 500) unlockAchievement('perfectGame');
                 
                 // Show score popup
                 showScorePopup(food.x, food.y, points * comboMultiplier, comboMultiplier);
