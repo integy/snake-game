@@ -6,41 +6,31 @@
     <title>🐍 Snake</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: #0a0a15; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            min-height: 100vh;
-            font-family: 'Courier New', monospace;
-            color: #0f0;
-            touch-action: manipulation;
-            padding: 10px;
-            overflow: hidden;
-        }
-        h1 { font-size: 26px; margin-bottom: 4px; text-shadow: 0 0 15px #0f0; animation: titleGlow 2s infinite alternate; }
+        body { background: #0a0a15; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Courier New', monospace; color: #0f0; touch-action: manipulation; padding: 10px; overflow: hidden; }
+        h1 { font-size: 24px; margin-bottom: 4px; text-shadow: 0 0 15px #0f0; animation: titleGlow 2s infinite alternate; }
         @keyframes titleGlow { from{text-shadow:0 0 10px #0f0} to{text-shadow:0 0 25px #0f0,0 0 35px #0f0} }
-        .stats { display: flex; gap: 8px; margin-bottom: 6px; font-size: 11px; flex-wrap: wrap; justify-content: center; }
-        .stat-box { background: rgba(0,255,0,0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid #0f0; }
-        #gameCanvas { border: 3px solid #0f0; background: #000; box-shadow: 0 0 40px rgba(0,255,0,0.5); max-width: 95vw; max-height: 50vh; border-radius: 8px; }
-        .btn { background: linear-gradient(180deg,#0f0 0%,#0a0 100%); color: #000; border: none; padding: 6px 12px; font-size: 11px; margin: 2px; border-radius: 4px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,255,0,0.3); }
+        .stats { display: flex; gap: 6px; margin-bottom: 6px; font-size: 10px; flex-wrap: wrap; justify-content: center; }
+        .stat-box { background: rgba(0,255,0,0.1); padding: 3px 6px; border-radius: 3px; border: 1px solid #0f0; }
+        .stat-high { color: #ffd700; }
+        #gameCanvas { border: 3px solid #0f0; background: #000; box-shadow: 0 0 40px rgba(0,255,0,0.5); max-width: 95vw; max-height: 45vh; border-radius: 8px; }
+        .btn { background: linear-gradient(180deg,#0f0 0%,#0a0 100%); color: #000; border: none; padding: 5px 10px; font-size: 10px; margin: 2px; border-radius: 4px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,255,0,0.3); }
         .btn:active { transform: translateY(1px); }
         .btn-sec { background: #222; color: #fff; border: 1px solid #444; box-shadow: none; }
         .btn-sec.active { background: #0f0; color: #000; }
         .btn-toggle { background: #333; color: #aaa; border: 1px solid #555; }
         .btn-toggle.on { background: #0f0; color: #000; }
-        .controls { color: #555; font-size: 10px; margin-top: 6px; }
-        .subtitle { color: #666; font-size: 9px; margin-top: 3px; }
+        .controls { color: #555; font-size: 9px; margin-top: 6px; }
+        .subtitle { color: #666; font-size: 8px; margin-top: 3px; }
     </style>
 </head>
 <body>
     <h1>🐍 SNAKE</h1>
     <div class="stats">
-        <span class="stat-box" id="scoreDisp">Score: 0</span>
+        <span class="stat-box">Score: <span id="scoreDisp">0</span></span>
         <span class="stat-box" id="comboDisp" style="display:none">x1</span>
         <span class="stat-box" id="timeDisp">60s</span>
         <span class="stat-box" id="modeDisp">Timer</span>
+        <span class="stat-box stat-high">🏆<span id="highDisp">0</span></span>
     </div>
     <canvas id="c" width="300" height="300"></canvas>
     <div style="margin: 4px 0;">
@@ -51,7 +41,7 @@
     </div>
     <button class="btn" onclick="startGame()">START</button>
     <div class="subtitle">🍏 🔴 🟡 💣 ⚡🛡️🌀❄️⏸️🎯🌈</div>
-    <div class="controls">Arrows/Swipe/Gyro | Space/Tap to pause</div>
+    <div class="controls">Arrows/Swipe/Gyro | Space/Tap pause</div>
     
     <script>
         const c = document.getElementById('c');
@@ -61,10 +51,12 @@
         let s = [], f = {x:10,y:10}, ft='normal', dx=1, dy=0, sc=0, gL=null, tL=null;
         let mode = 'timer', timeLeft = 60, paused = false, running = false;
         let obstacles = [], particles = [], combo = 0, comboTimer = null;
-        let speedBoost = false, shield = false, slowMo = false, rainbowMode = false, rainbowTimer = null;
+        let speedBoost = false, shield = false, slowMo = false, rainbow = false;
         let gyroEnabled = false;
         
         let highScores = JSON.parse(localStorage.getItem('snakeHighScores') || '[]');
+        let currentHigh = highScores.length > 0 ? highScores[0].score : 0;
+        document.getElementById('highDisp').innerText = currentHigh;
         
         let audioCtx = null;
         function playSound(type) {
@@ -77,7 +69,7 @@
             else if(type==='gold'){osc.frequency.value=1000;gain.gain.value=0.12;osc.start();osc.stop(audioCtx.currentTime+0.1);}
             else if(type==='bomb'){osc.frequency.value=120;osc.type='sawtooth';gain.gain.value=0.15;osc.start();osc.stop(audioCtx.currentTime+0.25);}
             else if(type==='power'){osc.frequency.value=400;gain.gain.value=0.1;osc.start();osc.stop(audioCtx.currentTime+0.15);}
-            else if(type==='rainbow'){osc.frequency.value=523;osc.frequency.setValueAtTime(523,audioCtx.currentTime);osc.frequency.linearRampToValueAtTime(880,audioCtx.currentTime+0.15);gain.gain.value=0.12;osc.start();osc.stop(audioCtx.currentTime+0.2);}
+            else if(type==='rainbow'){osc.frequency.value=600;osc.type='triangle';gain.gain.value=0.12;osc.start();osc.stop(audioCtx.currentTime+0.2);}
         }
         
         function toggleGyro() {
@@ -107,17 +99,17 @@
             while((onSnake(f.x,f.y)||onObstacle(f.x,f.y))&&tries<100);
             
             let r = Math.random();
-            if(r<0.35)ft='normal';
-            else if(r<0.48)ft='red';
-            else if(r<0.60)ft='gold';
-            else if(r<0.72)ft='bomb';
-            else if(r<0.79)ft='speed';
-            else if(r<0.85)ft='shield';
-            else if(r<0.90)ft='teleport';
-            else if(r<0.94)ft='timeFreeze';
-            else if(r<0.97)ft='slowMo';
-            else if(r<0.99)ft='rainbow';
-            else ft='target';
+            if(r<0.32)ft='normal';
+            else if(r<0.44)ft='red';
+            else if(r<0.55)ft='gold';
+            else if(r<0.66)ft='bomb';
+            else if(r<0.74)ft='speed';
+            else if(r<0.81)ft='shield';
+            else if(r<0.86)ft='teleport';
+            else if(r<0.90)ft='timeFreeze';
+            else if(r<0.93)ft='slowMo';
+            else if(r<0.96)ft='target';
+            else ft='rainbow';
         }
         
         function onSnake(x,y){return s.some(p=>p.x===x&&p.y===y);}
@@ -141,13 +133,9 @@
             if(type==='speed')speedBoost=true;
             else if(type==='shield')shield=true;
             else if(type==='slowMo')slowMo=true;
-            else if(type==='rainbow'){
-                rainbowMode=true;
-                if(rainbowTimer)clearTimeout(rainbowTimer);
-                rainbowTimer=setTimeout(()=>{rainbowMode=false;},8000);
-            }
-            playSound(type==='rainbow'?'rainbow':'power');
-            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;slowMo=false;rainbowMode=false;},5000);
+            else if(type==='rainbow'){rainbow=true;playSound('rainbow');}
+            playSound('power');
+            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;slowMo=false;rainbow=false;},8000);
         }
         
         function addCombo(){
@@ -163,7 +151,7 @@
         
         function startGame(){
             s=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;slowMo=false;rainbowMode=false;combo=0;
+            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;slowMo=false;rainbow=false;combo=0;
             timeLeft=mode==='timer'?60:999;obstacles=[];particles=[];
             document.getElementById('comboDisp').style.display='none';
             
@@ -189,7 +177,7 @@
             if(mode==='zen'){if(h.x<0)h.x=tc-1;if(h.x>=tc)h.x=0;if(h.y<0)h.y=tc-1;if(h.y>=tc)h.y=0;}
             else{if(h.x<0||h.x>=tc||h.y<0||h.y>=tc){if(mode==='classic'&&!shield){gameOver();return;}}}
             
-            if(onSnake(h.x,h.y)&&!(shield&&s.length>2)&&!rainbowMode){if(mode==='classic'&&!shield){gameOver();return;}}
+            if(onSnake(h.x,h.y)&&!(shield&&s.length>2)&&!rainbow){if(mode==='classic'&&!shield){gameOver();return;}}
             if(onObstacle(h.x,h.y)&&!shield){if(mode==='classic'){gameOver();return;}}
             
             s.unshift(h);
@@ -204,16 +192,22 @@
                 else if(ft==='teleport'){s[0]={x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)};createParticles(f.x,f.y,'#f0f');}
                 else if(ft==='timeFreeze'){if(mode==='timer'){timeLeft+=5;document.getElementById('timeDisp').innerText=timeLeft+'s';}createParticles(f.x,f.y,'#0ff');}
                 else if(ft==='slowMo'){activatePowerUp('slowMo');createParticles(f.x,f.y,'#90f');}
-                else if(ft==='rainbow'){activatePowerUp('rainbow');sc+=(rainbowMode?20:15)*mult;createParticles(f.x,f.y,'#f0f');createParticles(f.x,f.y,'#0ff');createParticles(f.x,f.y,'#ff0');}
                 else if(ft==='target'){sc+=50*mult;createParticles(f.x,f.y,'#f0f');}
-                else{sc+=(rainbowMode?20:10)*mult;playSound(rainbowMode?'rainbow':'eat');createParticles(f.x,f.y,rainbowMode?'#f0f':'#0f0');}
+                else if(ft==='rainbow'){activatePowerUp('rainbow');sc+=15*mult;createParticles(f.x,f.y,'#f0f');}
+                else{sc+=10*mult;playSound('eat');createParticles(f.x,f.y,'#0f0');}
                 updateScore();placeFood();
             }else s.pop();
             
             updateParticles();draw();
         }
         
-        function updateScore(){document.getElementById('scoreDisp').innerText='Score: '+sc;}
+        function updateScore(){
+            document.getElementById('scoreDisp').innerText=sc;
+            if(sc > currentHigh) {
+                currentHigh = sc;
+                document.getElementById('highDisp').innerText = currentHigh;
+            }
+        }
         
         function gameOver(){
             running=false;if(gL)clearInterval(gL);if(tL)clearInterval(tL);playSound('bomb');
@@ -223,6 +217,8 @@
                 highScores.sort((a,b)=>b.score-a.score);
                 highScores=highScores.slice(0,10);
                 localStorage.setItem('snakeHighScores',JSON.stringify(highScores));
+                currentHigh = highScores[0].score;
+                document.getElementById('highDisp').innerText = currentHigh;
                 alert('🏆 Top 10:\n'+highScores.map((h,i)=>i+1+'. '+h.name+': '+h.score).join('\n'));
             }
         }
@@ -239,7 +235,6 @@
             for(let o of obstacles)ctx.fillRect(o.x*gs+1,o.y*gs+1,gs-2,gs-2);
             ctx.shadowBlur=0;
             
-            // Target indicator line
             if(ft==='target'){
                 ctx.strokeStyle='rgba(255,0,255,0.5)';
                 ctx.lineWidth=2;
@@ -260,29 +255,27 @@
             else if(ft==='timeFreeze'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff';}
             else if(ft==='slowMo'){ctx.fillStyle='#90f';ctx.shadowColor='#90f';}
             else if(ft==='target'){ctx.fillStyle='#f0f';ctx.shadowColor='#f0f';}
+            else if(ft==='rainbow'){ctx.fillStyle=`hsl(${pulse*50%360},100%,50%)`;ctx.shadowColor=ctx.fillStyle;}
             else{ctx.fillStyle='#0f0';ctx.shadowColor='#0f0';}
             ctx.fillRect(f.x*gs+2,f.y*gs+2,(gs-4)*foodPulse,(gs-4)*foodPulse);
             ctx.shadowBlur=0;
             
             const wave=Math.sin(pulse)*0.15+0.85;
-            ctx.shadowBlur=rainbowMode?20:(shield?18:(slowMo?12:10));
-            const rainbowColors=['#f00','#f80','#ff0','#0f0','#0ff','#00f','#f0f'];
+            ctx.shadowBlur=shield?18:(slowMo?12:(rainbow?15:10));
+            ctx.shadowColor=shield?'#0ff':(slowMo?'#90f':(rainbow?`hsl(${pulse*30%360},100%,50%)`:'#0f0'));
             for(let i=0;i<s.length;i++){
                 ctx.globalAlpha=wave-(i*0.05);
-                if(rainbowMode){
-                    const rc=rainbowColors[(i+pulse*2)%rainbowColors.length|0];
-                    ctx.fillStyle=rc;ctx.shadowColor=rc;
-                }else{
-                    ctx.fillStyle=shield?'#0ff':(slowMo?'#90f':'#0f0');
-                    ctx.shadowColor=shield?'#0ff':(slowMo?'#90f':'#0f0');
-                }
+                ctx.fillStyle=shield?'#0ff':(slowMo?'#90f':(rainbow?`hsl(${(pulse*30+i*20)%360},100%,50%)`:'#0f0'));
                 ctx.fillRect(s[i].x*gs+1,s[i].y*gs+1,gs-2,gs-2);
             }
             ctx.globalAlpha=1;ctx.shadowBlur=0;
             
             drawParticles();
             
-            if(speedBoost||shield||slowMo||rainbowMode){ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(speedBoost?'⚡':shield?'🛡️':slowMo?'⏸️':'🌈',5,295);}
+            if(speedBoost||shield||slowMo||rainbow){
+                ctx.fillStyle='#fff';ctx.font='10px sans-serif';
+                ctx.fillText(speedBoost?'⚡':shield?'🛡️':slowMo?'⏸️':'🌈',5,295);
+            }
         }
         
         document.onkeydown=e=>{
