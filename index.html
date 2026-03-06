@@ -323,8 +323,8 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.4</span></h1>
-    <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3 | 💣 Bomb (-20) | 🌀 Teleport | ❄️ Time Freeze | ⚡🛡️🧲 Power-ups!</div>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.5</span></h1>
+    <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
@@ -340,6 +340,7 @@
     
     <div class="stats">
         <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat" id="levelStat" style="display:none;">Level: <span id="level">1</span></div>
         <div class="stat">Speed: <span id="speed">100ms</span></div>
         <div class="stat">Time: <span id="timer">60</span>s</div>
         <div class="stat" id="comboStat" style="display:none;">Combo: <span id="combo">x1</span></div>
@@ -531,6 +532,8 @@
         let comboCount = 0;
         let comboMultiplier = 1;
         let comboTimeout = null;
+        let gameLevel = 1;
+        let lastLevelScore = 0;
         
         // Particle effects
         let particles = [];
@@ -808,9 +811,20 @@
             comboCount = 0;
             comboMultiplier = 1;
             lastEatTime = 0;
+            gameLevel = 1;
+            lastLevelScore = 0;
             if (comboTimeout) clearTimeout(comboTimeout);
             document.getElementById('combo').textContent = 'x1';
             document.getElementById('comboStat').style.display = 'none';
+            
+            // Show level in timer/classic modes
+            if (gameMode === 'timer' || gameMode === 'classic') {
+                document.getElementById('levelStat').style.display = 'block';
+                document.getElementById('level').textContent = '1';
+            } else {
+                document.getElementById('levelStat').style.display = 'none';
+            }
+            
             isPaused = false;
             isGameOver = false;
             isTimeFrozen = false;
@@ -1222,6 +1236,35 @@
                 }, 2000);
                 
                 score += points * comboMultiplier;
+                
+                // Check for level up (every 100 points)
+                const newLevel = Math.floor(score / 100) + 1;
+                if (newLevel > gameLevel) {
+                    gameLevel = newLevel;
+                    document.getElementById('level').textContent = gameLevel;
+                    
+                    // Level up effects
+                    const hint = document.getElementById('modeHint');
+                    hint.textContent = '🎉 LEVEL UP! Level ' + gameLevel + ' - Speed UP!';
+                    hint.style.color = '#ffd700';
+                    
+                    // Increase speed every level
+                    currentSpeed = Math.max(30, currentSpeed - 5); // 5ms faster each level, min 30ms
+                    if (gameLoop) clearInterval(gameLoop);
+                    gameLoop = setInterval(update, currentSpeed);
+                    document.getElementById('speed').textContent = currentSpeed + 'ms';
+                    
+                    // Lots of particles!
+                    for (let i = 0; i < 30; i++) {
+                        createParticles(snake[0].x, snake[0].y, '#ffd700');
+                    }
+                    
+                    playSound('eatGold');
+                    
+                    setTimeout(() => {
+                        hint.style.color = '';
+                    }, 1500);
+                }
                 
                 // Create particle effect based on food type
                 let particleColor;
