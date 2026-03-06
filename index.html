@@ -21,28 +21,10 @@
         }
         h1 { font-size: 26px; margin-bottom: 4px; text-shadow: 0 0 15px #0f0; animation: titleGlow 2s infinite alternate; }
         @keyframes titleGlow { from{text-shadow:0 0 10px #0f0} to{text-shadow:0 0 25px #0f0,0 0 35px #0f0} }
-        .stats { display: flex; gap: 10px; margin-bottom: 6px; font-size: 12px; flex-wrap: wrap; justify-content: center; }
-        .stat-box { background: rgba(0,255,0,0.1); padding: 4px 10px; border-radius: 4px; border: 1px solid #0f0; }
-        #gameCanvas { 
-            border: 3px solid #0f0; 
-            background: #000;
-            box-shadow: 0 0 40px rgba(0,255,0,0.5), inset 0 0 30px rgba(0,255,0,0.1);
-            max-width: 95vw;
-            max-height: 55vh;
-            border-radius: 8px;
-        }
-        .btn {
-            background: linear-gradient(180deg,#0f0 0%,#0a0 100%);
-            color: #000;
-            border: none;
-            padding: 8px 14px;
-            font-size: 12px;
-            margin: 2px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,255,0,0.3);
-        }
+        .stats { display: flex; gap: 8px; margin-bottom: 6px; font-size: 11px; flex-wrap: wrap; justify-content: center; }
+        .stat-box { background: rgba(0,255,0,0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid #0f0; }
+        #gameCanvas { border: 3px solid #0f0; background: #000; box-shadow: 0 0 40px rgba(0,255,0,0.5); max-width: 95vw; max-height: 50vh; border-radius: 8px; }
+        .btn { background: linear-gradient(180deg,#0f0 0%,#0a0 100%); color: #000; border: none; padding: 6px 12px; font-size: 11px; margin: 2px; border-radius: 4px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,255,0,0.3); }
         .btn:active { transform: translateY(1px); }
         .btn-sec { background: #222; color: #fff; border: 1px solid #444; box-shadow: none; }
         .btn-sec.active { background: #0f0; color: #000; }
@@ -56,8 +38,8 @@
     <h1>🐍 SNAKE</h1>
     <div class="stats">
         <span class="stat-box" id="scoreDisp">Score: 0</span>
-        <span class="stat-box" id="comboDisp" style="display:none">Combo: x1</span>
-        <span class="stat-box" id="timeDisp">Time: 60s</span>
+        <span class="stat-box" id="comboDisp" style="display:none">x1</span>
+        <span class="stat-box" id="timeDisp">60s</span>
         <span class="stat-box" id="modeDisp">Timer</span>
     </div>
     <canvas id="c" width="300" height="300"></canvas>
@@ -65,11 +47,11 @@
         <button class="btn btn-sec active" onclick="setMode('timer')">⏱️</button>
         <button class="btn btn-sec" onclick="setMode('classic')">💀</button>
         <button class="btn btn-sec" onclick="setMode('zen')">🧘</button>
-        <button class="btn btn-toggle" id="gyroBtn" onclick="toggleGyro()">📱 Gyro: OFF</button>
+        <button class="btn btn-toggle" id="gyroBtn" onclick="toggleGyro()">📱</button>
     </div>
-    <button class="btn" id="startBtn" onclick="startGame()">START</button>
-    <div class="subtitle">🍏+10 🔴+20 🟡+30 💣-10 ⚡🛡️🌀❄️</div>
-    <div class="controls">Arrows/Swipe/Gyro | Space | Tap to pause</div>
+    <button class="btn" onclick="startGame()">START</button>
+    <div class="subtitle">🍏 🔴 🟡 💣 ⚡🛡️🌀❄️⏸️🎯</div>
+    <div class="controls">Arrows/Swipe/Gyro | Space/Tap to pause</div>
     
     <script>
         const c = document.getElementById('c');
@@ -79,8 +61,8 @@
         let s = [], f = {x:10,y:10}, ft='normal', dx=1, dy=0, sc=0, gL=null, tL=null;
         let mode = 'timer', timeLeft = 60, paused = false, running = false;
         let obstacles = [], particles = [], combo = 0, comboTimer = null;
-        let speedBoost = false, shield = false;
-        let gyroEnabled = false, lastGyro = {x:0,y:0};
+        let speedBoost = false, shield = false, slowMo = false;
+        let gyroEnabled = false;
         
         let highScores = JSON.parse(localStorage.getItem('snakeHighScores') || '[]');
         
@@ -90,7 +72,6 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            
             if(type==='eat'){osc.frequency.value=600;gain.gain.value=0.08;osc.start();osc.stop(audioCtx.currentTime+0.08);}
             else if(type==='combo'){osc.frequency.value=800;gain.gain.value=0.1;osc.start();osc.stop(audioCtx.currentTime+0.1);}
             else if(type==='gold'){osc.frequency.value=1000;gain.gain.value=0.12;osc.start();osc.stop(audioCtx.currentTime+0.1);}
@@ -100,41 +81,24 @@
         
         function toggleGyro() {
             gyroEnabled = !gyroEnabled;
-            const btn = document.getElementById('gyroBtn');
-            btn.innerText = '📱 Gyro: ' + (gyroEnabled ? 'ON' : 'OFF');
-            btn.classList.toggle('on', gyroEnabled);
-            
-            if(gyroEnabled) {
-                if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    DeviceOrientationEvent.requestPermission().then(response => {
-                        if(response !== 'granted') gyroEnabled = false;
-                    }).catch(() => gyroEnabled = false);
-                }
+            document.getElementById('gyroBtn').classList.toggle('on', gyroEnabled);
+            if(gyroEnabled && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission().catch(() => gyroEnabled = false);
             }
         }
         
-        function handleOrientation(e) {
+        window.addEventListener('deviceorientation', e => {
             if(!gyroEnabled || !running || paused) return;
-            
-            const x = e.gamma || 0; // Left/right tilt (-90 to 90)
-            const y = e.beta || 0;   // Front/back tilt (-180 to 180)
-            
-            // Dead zone
+            const x = e.gamma || 0, y = e.beta || 0;
             if(Math.abs(x) < 10 && Math.abs(y) < 10) return;
-            
-            // Determine direction based on tilt
             if(Math.abs(x) > Math.abs(y)) {
-                // Horizontal tilt
                 if(x > 5 && dx !== -1) { dx = 1; dy = 0; }
                 else if(x < -5 && dx !== 1) { dx = -1; dy = 0; }
             } else {
-                // Vertical tilt
                 if(y > 5 && dy !== -1) { dx = 0; dy = 1; }
                 else if(y < -5 && dy !== 1) { dx = 0; dy = -1; }
             }
-        }
-        
-        window.addEventListener('deviceorientation', handleOrientation);
+        });
         
         function placeFood() {
             let tries = 0;
@@ -142,14 +106,16 @@
             while((onSnake(f.x,f.y)||onObstacle(f.x,f.y))&&tries<100);
             
             let r = Math.random();
-            if(r<0.40)ft='normal';
-            else if(r<0.55)ft='red';
-            else if(r<0.68)ft='gold';
-            else if(r<0.80)ft='bomb';
-            else if(r<0.86)ft='speed';
-            else if(r<0.91)ft='shield';
-            else if(r<0.95)ft='teleport';
-            else ft='timeFreeze';
+            if(r<0.35)ft='normal';
+            else if(r<0.48)ft='red';
+            else if(r<0.60)ft='gold';
+            else if(r<0.72)ft='bomb';
+            else if(r<0.79)ft='speed';
+            else if(r<0.85)ft='shield';
+            else if(r<0.90)ft='teleport';
+            else if(r<0.94)ft='timeFreeze';
+            else if(r<0.97)ft='slowMo';
+            else ft='target';
         }
         
         function onSnake(x,y){return s.some(p=>p.x===x&&p.y===y);}
@@ -165,26 +131,23 @@
         function createParticles(x,y,color){
             for(let i=0;i<10;i++)particles.push({x:x*gs+gs/2,y:y*gs+gs/2,vx:(Math.random()-0.5)*8,vy:(Math.random()-0.5)*8,life:1,color:color});
         }
-        function updateParticles(){
-            particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.04;return p.life>0;});
-        }
-        function drawParticles(){
-            for(let p of particles){ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();}
-            ctx.globalAlpha=1;
-        }
+        function updateParticles(){particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.04;return p.life>0;});}
+        function drawParticles(){for(let p of particles){ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;}
         
         function activatePowerUp(type){
             if(comboTimer)clearTimeout(comboTimer);
-            if(type==='speed'){speedBoost=true;playSound('power');}
-            else if(type==='shield'){shield=true;playSound('power');}
-            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;},5000);
+            if(type==='speed')speedBoost=true;
+            else if(type==='shield')shield=true;
+            else if(type==='slowMo')slowMo=true;
+            playSound('power');
+            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;slowMo=false;},5000);
         }
         
         function addCombo(){
             combo++;
             let mult=Math.min(combo,5);
             document.getElementById('comboDisp').style.display='inline';
-            document.getElementById('comboDisp').innerText='Combo: x'+mult;
+            document.getElementById('comboDisp').innerText='x'+mult;
             if(combo>=3)playSound('combo');
             if(comboTimer)clearTimeout(comboTimer);
             comboTimer=setTimeout(()=>{combo=0;document.getElementById('comboDisp').style.display='none';},2000);
@@ -193,7 +156,7 @@
         
         function startGame(){
             s=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;combo=0;
+            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;slowMo=false;combo=0;
             timeLeft=mode==='timer'?60:999;obstacles=[];particles=[];
             document.getElementById('comboDisp').style.display='none';
             
@@ -201,18 +164,18 @@
             
             placeFood();updateScore();running=true;
             if(gL)clearInterval(gL);if(tL)clearInterval(tL);
-            gL=setInterval(update,speedBoost?60:100);
+            gL=setInterval(update,slowMo?180:(speedBoost?60:100));
             
             if(mode==='timer')tL=setInterval(()=>{
-                if(!paused&&running){timeLeft--;document.getElementById('timeDisp').innerText='Time: '+timeLeft+'s';if(timeLeft<=0)gameOver();}
+                if(!paused&&running){timeLeft--;document.getElementById('timeDisp').innerText=timeLeft+'s';if(timeLeft<=0)gameOver();}
             },1000);
         }
         
         function update(){
             if(!running||paused){updateParticles();draw();return;}
             
-            let spd=speedBoost?60:100;
-            if(speedBoost!==(gL._period===60)){clearInterval(gL);gL=setInterval(update,spd);}
+            let spd=slowMo?180:(speedBoost?60:100);
+            if(slowMo!==(gL._period===180) || speedBoost!==(gL._period===60)){clearInterval(gL);gL=setInterval(update,spd);}
             
             let h={x:s[0].x+dx,y:s[0].y+dy};
             
@@ -228,11 +191,13 @@
                 let mult=addCombo();
                 if(ft==='red'){sc+=20*mult;playSound('gold');createParticles(f.x,f.y,'#f44');}
                 else if(ft==='gold'){sc+=30*mult;playSound('gold');createParticles(f.x,f.y,'#fd0');}
-                else if(ft==='bomb'){sc=Math.max(0,sc-10);playSound('bomb');createParticles(f.x,f.y,'#f00');shake=8;}
+                else if(ft==='bomb'){sc=Math.max(0,sc-10);playSound('bomb');createParticles(f.x,f.y,'#f00');}
                 else if(ft==='speed'){activatePowerUp('speed');createParticles(f.x,f.y,'#ff0');}
                 else if(ft==='shield'){activatePowerUp('shield');createParticles(f.x,f.y,'#0ff');}
                 else if(ft==='teleport'){s[0]={x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)};createParticles(f.x,f.y,'#f0f');}
-                else if(ft==='timeFreeze'){if(mode==='timer'){timeLeft+=5;document.getElementById('timeDisp').innerText='Time: '+timeLeft+'s';}createParticles(f.x,f.y,'#0ff');}
+                else if(ft==='timeFreeze'){if(mode==='timer'){timeLeft+=5;document.getElementById('timeDisp').innerText=timeLeft+'s';}createParticles(f.x,f.y,'#0ff');}
+                else if(ft==='slowMo'){activatePowerUp('slowMo');createParticles(f.x,f.y,'#90f');}
+                else if(ft==='target'){sc+=50*mult;createParticles(f.x,f.y,'#f0f');}
                 else{sc+=10*mult;playSound('eat');createParticles(f.x,f.y,'#0f0');}
                 updateScore();placeFood();
             }else s.pop();
@@ -244,38 +209,20 @@
         
         function gameOver(){
             running=false;if(gL)clearInterval(gL);if(tL)clearInterval(tL);playSound('bomb');
-            let name=prompt('Game Over! Score: '+sc+'\nEnter your name:','Player');
+            let name=prompt('Game Over! Score: '+sc+'\nName:','Player');
             if(name){
                 highScores.push({name:name.substring(0,10),score:sc,date:new Date().toLocaleDateString()});
                 highScores.sort((a,b)=>b.score-a.score);
                 highScores=highScores.slice(0,10);
                 localStorage.setItem('snakeHighScores',JSON.stringify(highScores));
-                alert('Score saved!\n\n🏆 Top 10:\n'+highScores.map((h,i)=>i+1+'. '+h.name+': '+h.score).join('\n'));
+                alert('🏆 Top 10:\n'+highScores.map((h,i)=>i+1+'. '+h.name+': '+h.score).join('\n'));
             }
         }
         
         let pulse=0;
-        let snakeWave=0;
         function draw(){
             pulse+=0.1;
-            snakeWave+=0.15;
-            
-            ctx.save();
-            // Screen shake effect
-            if(shake>0){
-                ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
-                shake-=0.5;
-            }
-            
             ctx.fillStyle='#000';ctx.fillRect(0,0,300,300);
-            
-            // Background particles - subtle floating effect
-            ctx.fillStyle='rgba(0,255,0,0.03)';
-            for(let i=0;i<15;i++){
-                let px=(Date.now()/20+i*73)%300;
-                let py=(Date.now()/30+i*97)%300;
-                ctx.beginPath();ctx.arc(px,py,1,0,Math.PI*2);ctx.fill();
-            }
             
             ctx.strokeStyle='rgba(0,255,0,0.06)';
             for(let i=0;i<tc;i++){ctx.beginPath();ctx.moveTo(i*gs,0);ctx.lineTo(i*gs,300);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*gs);ctx.lineTo(300,i*gs);ctx.stroke();}
@@ -284,52 +231,44 @@
             for(let o of obstacles)ctx.fillRect(o.x*gs+1,o.y*gs+1,gs-2,gs-2);
             ctx.shadowBlur=0;
             
+            // Target indicator line
+            if(ft==='target'){
+                ctx.strokeStyle='rgba(255,0,255,0.5)';
+                ctx.lineWidth=2;
+                ctx.beginPath();
+                ctx.moveTo(s[0].x*gs+gs/2,s[0].y*gs+gs/2);
+                ctx.lineTo(f.x*gs+gs/2,f.y*gs+gs/2);
+                ctx.stroke();
+            }
+            
             ctx.shadowBlur=15;
             const foodPulse=1+Math.sin(pulse)*0.2;
             if(ft==='red'){ctx.fillStyle='#f44';ctx.shadowColor='#f44';}
-            else if(ft==='gold'){
-                ctx.fillStyle='#fd0';ctx.shadowColor='#fd0';
-                // Lightning effect for gold food
-                ctx.strokeStyle='#ff0';ctx.lineWidth=2;
-                for(let j=0;j<3;j++){
-                    ctx.beginPath();
-                    let lx=f.x*gs+gs/2,ly=f.y*gs+gs/2;
-                    for(let k=0;k<4;k++){
-                        lx+=(Math.random()-0.5)*12;ly+=Math.random()*10;
-                        ctx.lineTo(lx,ly);
-                    }
-                    ctx.stroke();
-                }
-                ctx.lineWidth=1;
-            }
+            else if(ft==='gold'){ctx.fillStyle='#fd0';ctx.shadowColor='#fd0';}
             else if(ft==='bomb'){ctx.fillStyle='#f00';ctx.shadowColor='#f00';}
             else if(ft==='speed'){ctx.fillStyle='#ff0';ctx.shadowColor='#ff0';}
             else if(ft==='shield'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff';}
             else if(ft==='teleport'){ctx.fillStyle='#f0f';ctx.shadowColor='#f0f';}
             else if(ft==='timeFreeze'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff';}
+            else if(ft==='slowMo'){ctx.fillStyle='#90f';ctx.shadowColor='#90f';}
+            else if(ft==='target'){ctx.fillStyle='#f0f';ctx.shadowColor='#f0f';}
             else{ctx.fillStyle='#0f0';ctx.shadowColor='#0f0';}
             ctx.fillRect(f.x*gs+2,f.y*gs+2,(gs-4)*foodPulse,(gs-4)*foodPulse);
             ctx.shadowBlur=0;
             
             const wave=Math.sin(pulse)*0.15+0.85;
-            // Snake wave animation - body segments follow a sine wave
-            ctx.shadowBlur=shield?18:10;
-            ctx.shadowColor=shield?'#0ff':'#0f0';
+            ctx.shadowBlur=shield?18:(slowMo?12:10);
+            ctx.shadowColor=shield?'#0ff':(slowMo?'#90f':'#0f0');
             for(let i=0;i<s.length;i++){
                 ctx.globalAlpha=wave-(i*0.05);
-                ctx.fillStyle=shield?'#0ff':'#0f0';
-                // Add wave offset for body segments
-                let waveOffset = Math.sin(snakeWave + i * 0.4) * 1.5;
-                let sizeVar = gs-2 + (i>0 ? Math.sin(snakeWave + i * 0.5) * 1.5 : 0);
-                ctx.fillRect(s[i].x*gs+1+waveOffset/2,s[i].y*gs+1,Math.max(gs-4,sizeVar),Math.max(gs-4,sizeVar));
+                ctx.fillStyle=shield?'#0ff':(slowMo?'#90f':'#0f0');
+                ctx.fillRect(s[i].x*gs+1,s[i].y*gs+1,gs-2,gs-2);
             }
             ctx.globalAlpha=1;ctx.shadowBlur=0;
             
             drawParticles();
             
-            if(speedBoost||shield){ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(speedBoost?'⚡SPEED!':'🛡️SHIELD!',5,295);}
-            
-            ctx.restore();
+            if(speedBoost||shield||slowMo){ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(speedBoost?'⚡':shield?'🛡️':'⏸️',5,295);}
         }
         
         document.onkeydown=e=>{
@@ -341,7 +280,6 @@
         };
         
         let tx,ty;
-        let shake=0;
         c.ontouchstart=e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;};
         c.ontouchend=e=>{
             let dx2=e.changedTouches[0].clientX-tx,dy2=e.changedTouches[0].clientY-ty;
