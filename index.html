@@ -994,83 +994,35 @@
             dx = 1;
             dy = 0;
             score = 0;
-            currentSpeed = difficultySpeed[difficulty]; // Reset speed based on difficulty
-            particles = []; // Reset particles
+            currentSpeed = 100; // Fixed speed
+            particles = [];
             comboCount = 0;
             comboMultiplier = 1;
             lastEatTime = 0;
             gameLevel = 1;
-            lastLevelScore = 0;
-            
-            // Initialize obstacles for classic mode
             obstacles = [];
-            if (gameMode === 'classic') {
-                const numObstacles = Math.floor(Math.random() * 3) + 3; // 3-5 rocks
-                for (let i = 0; i < numObstacles; i++) {
-                    obstacles.push({
-                        x: Math.floor(Math.random() * (tileCount - 2)) + 1,
-                        y: Math.floor(Math.random() * (tileCount - 2)) + 1
-                    });
-                }
-            }
-            
-            // Reset achievement tracking
-            bombsHit = 0;
-            zenTime = 0;
+            extraLife = false;
             
             if (comboTimeout) clearTimeout(comboTimeout);
-            document.getElementById('combo').textContent = 'x1';
-            document.getElementById('comboStat').style.display = 'none';
-            
-            // Show level in timer/classic modes
-            if (gameMode === 'timer' || gameMode === 'classic') {
-                document.getElementById('levelStat').style.display = 'block';
-                document.getElementById('level').textContent = '1';
-            } else {
-                document.getElementById('levelStat').style.display = 'none';
-            }
-            
-            isPaused = false;
-            isGameOver = false;
-            isTimeFrozen = false;
-            document.getElementById('score').textContent = score;
-            document.getElementById('speed').textContent = currentSpeed + 'ms';
-            
-            // Handle timer display based on mode
-            const timerEl = document.getElementById('timer');
-            if (gameMode === 'timer') {
-                timeLeft = 60;
-                timerEl.textContent = timeLeft;
-                timerEl.parentElement.style.display = 'block';
-            } else if (gameMode === 'classic') {
-                timeLeft = 999;
-                timerEl.textContent = '∞';
-                timerEl.parentElement.style.display = 'block';
-            } else { // zen
-                timeLeft = 999;
-                timerEl.textContent = '∞';
-                timerEl.parentElement.style.display = 'none';
-            }
             
             spawnFood();
+            draw();
             
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(update, currentSpeed);
             
-            // Start countdown timer (only for timer mode)
+            // Timer for timer mode
             if (timerLoop) clearInterval(timerLoop);
             if (gameMode === 'timer') {
-                timerLoop = setInterval(() => {
-                    if (!isPaused && !isGameOver && !isTimeFrozen) {
+                timeLeft = 60;
+                document.getElementById('timer').textContent = timeLeft;
+                timerLoop = setInterval(function() {
+                    if (!isPaused && !isGameOver) {
                         timeLeft--;
                         document.getElementById('timer').textContent = timeLeft;
-                        if (timeLeft <= 0) {
-                            gameOver(); // Time's up!
-                        }
+                        if (timeLeft <= 0) gameOver();
                     }
                 }, 1000);
-            } else {
-                timerLoop = null;
             }
         }
         
