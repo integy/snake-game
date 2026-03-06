@@ -24,7 +24,7 @@
         const cv=document.getElementById('c'),ctx=cv.getContext('2d');
         const gs=14,tc=20;
         let s=[],f={x:10,y:10},ft='n',dx=1,dy=0,sc=0,lv=1,lvScore=0,gL,tL,mode='timer',tm=60,ob=[],pt=[],cmb=0,cmbT;
-        let spd=false,sh=false,sl=false,rnb=false,d2=false,gh=false;
+        let spd=false,sh=false,sl=false,rnb=false,d2=false,gh=false,xray=false,hidden=false,hiddenT;
         
         let hs=JSON.parse(localStorage.getItem('hs')||'[]');
         document.getElementById('bst').innerText=hs[0]?.score||0;
@@ -42,15 +42,17 @@
         function pf(){
             let x=Math.random();
             if(x<0.28)ft='n';
-            else if(x<0.40)ft='r';
-            else if(x<0.50)ft='g';
-            else if(x<0.60)ft='b';
-            else if(x<0.68)ft='sp';
-            else if(x<0.75)ft='sh';
-            else if(x<0.82)ft='sl';
-            else if(x<0.88)ft='tm';
-            else if(x<0.93)ft='rnb';
-            else ft='d2';
+            else if(x<0.37)ft='r';
+            else if(x<0.44)ft='g';
+            else if(x<0.50)ft='b';
+            else if(x<0.55)ft='sp';
+            else if(x<0.60)ft='sh';
+            else if(x<0.65)ft='sl';
+            else if(x<0.70)ft='tm';
+            else if(x<0.76)ft='rnb';
+            else if(x<0.82)ft='d2';
+            else if(x<0.89)ft='xr';
+            else ft='hi';
             let t=0;
             do{f={x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)};t++;}while((s.some(p=>p.x===f.x&&p.y===f.y))&&(ob.some(o=>o.x===f.x&&o.y===f.y)))&&t<100);
         }
@@ -69,7 +71,9 @@
             else if(t==='rnb')rnb=true;
             else if(t==='d2')d2=true;
             else if(t==='gh')gh=true;
-            cmbT=setTimeout(()=>{spd=sh=sl=rnb=d2=gh=false},5000);
+            else if(t==='xr')xray=true;
+            else if(t==='hi'){hidden=true;if(hiddenT)clearTimeout(hiddenT);hiddenT=setTimeout(()=>hidden=false,8000)}
+            cmbT=setTimeout(()=>{spd=sh=sl=rnb=d2=gh=xray=false},5000);
         }
         
         function cmbF(){
@@ -94,7 +98,7 @@
         
         function start(){
             s=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-            dx=1;dy=0;sc=0;lv=1;lvScore=0;tm=mode==='timer'?60:999;spd=sh=sl=rnb=d2=gh=false;cmb=0;ob=[];pt=[];
+            dx=1;dy=0;sc=0;lv=1;lvScore=0;tm=mode==='timer'?60:999;spd=sh=sl=rnb=d2=gh=xray=false;hidden=false;cmb=0;ob=[];pt=[];
             document.getElementById('lv').innerText=1;
             if(mode==='classic')for(let i=0;i<4;i++)ob.push({x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)});
             pf();scU();
@@ -121,6 +125,8 @@
                 else if(ft==='sl'){pu('sl');cp(f.x,f.y,'#90f')}
                 else if(ft==='rnb'){pu('rnb');cp(f.x,f.y,'#f0f')}
                 else if(ft==='d2'){pu('d2');cp(f.x,f.y,'#ff0')}
+                else if(ft==='xr'){pu('xr');cp(f.x,f.y,'#0ff')}
+                else if(ft==='hi'){hidden=true;if(hiddenT)clearTimeout(hiddenT);hiddenT=setTimeout(()=>hidden=false,8000);sc+=15*m*pm;cp(f.x,f.y,'#888')}
                 else{sc+=10*m*pm;cp(f.x,f.y,'#0f0');sndS('e')}
                 chkLv();scU();pf();
             }else s.pop();
@@ -145,8 +151,13 @@
             else if(ft==='tm'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff'}
             else if(ft==='rnb'){ctx.fillStyle='hsl('+(pl*50%360)+',100%,50%)';ctx.shadowColor=ctx.fillStyle}
             else if(ft==='d2'){ctx.fillStyle='#ff0';ctx.shadowColor='#ff0'}
+            else if(ft==='xr'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff'}
+            else if(ft==='hi'){ctx.fillStyle='#888';ctx.shadowColor='#888'}
             else{ctx.fillStyle='#0f0';ctx.shadowColor='#0f0'}
+            if(hidden&&!xray&&ft!=='xr'&&ft!=='hi'){ctx.globalAlpha=0.15}
             ctx.fillRect(f.x*gs+2,f.y*gs+2,(gs-4)*pc,(gs-4)*pc);
+            ctx.globalAlpha=1;
+            if(xray&&hidden){ctx.strokeStyle='#0ff';ctx.lineWidth=1;ctx.strokeRect(f.x*gs+2,f.y*gs+2,(gs-4)*pc,(gs-4)*pc)}
             ctx.shadowBlur=sh||gh?15:8;
             ctx.shadowColor=sh?'#0ff':(gh?'#fff':(rnb?'hsl('+(pl*30%360)+',100%,50%)':(d2?'#ff0':'#0f0')));
             let wa=Math.sin(pl)*0.15+0.85;
@@ -157,7 +168,7 @@
                 ctx.fillRect(s[i].x*gs+1,s[i].y*gs+1,gs-2,gs-2);
             }
             ctx.globalAlpha=1;ctx.shadowBlur=0;dpt();
-            if(spd||sh||sl||rnb||d2||gh){ctx.fillStyle='#fff';ctx.font='10px';ctx.fillText(spd?'⚡':sh?'🛡️':sl?'⏸️':rnb?'🌈':d2?'🎲':'👻',5,275)}
+            if(spd||sh||sl||rnb||d2||gh||xray||hidden){ctx.fillStyle='#fff';ctx.font='10px';ctx.fillText(spd?'⚡':sh?'🛡️':sl?'⏸️':rnb?'🌈':d2?'🎲':xray?'🔍':hidden?'👁️':'👻',5,275)}
         }
         
         document.onkeydown=e=>{
