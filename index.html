@@ -521,30 +521,19 @@
     <!-- Start Modal -->
     <div class="modal-overlay" id="startModal" style="touch-action: manipulation;">
         <div class="modal" style="max-width: 90%;">
-        <div class="modal">
             <h2>🎮 Welcome!</h2>
-            <p style="margin-bottom: 20px; color: #888;">Enter your name to play and compete on the leaderboard</p>
-            <input type="text" id="playerNameInput" placeholder="Your name" maxlength="15" autocomplete="off">
+            <p style="margin-bottom: 20px; color: #888;">Enter your name</p>
             
             <div style="margin-bottom: 20px;">
-                <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;">Select Game Mode:</p>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="mode-btn active" onclick="selectMode('timer', this)" data-mode="timer">⏱️ Timer</button>
-                    <button class="mode-btn" onclick="selectMode('classic', this)" data-mode="classic">💀 Classic</button>
-                    <button class="mode-btn" onclick="selectMode('zen', this)" data-mode="zen">🧘 Zen</button>
+                <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;">Mode:</p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="mode-btn active" onclick="selectMode('timer', this)">⏱️ Timer</button>
+                    <button class="mode-btn" onclick="selectMode('classic', this)">💀 Classic</button>
+                    <button class="mode-btn" onclick="selectMode('zen', this)">🧘 Zen</button>
                 </div>
             </div>
             
-            <div style="margin-bottom: 20px;">
-                <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;">Select Difficulty:</p>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="mode-btn" onclick="selectDifficulty('easy', this)" data-diff="easy">🐢 Easy</button>
-                    <button class="mode-btn active" onclick="selectDifficulty('normal', this)" data-diff="normal">🔥 Normal</button>
-                    <button class="mode-btn" onclick="selectDifficulty('hard', this)" data-diff="hard">💀 Hard</button>
-                </div>
-            </div>
-            
-            <button id="startBtn" onclick="startGame(); return false;" ontouchend="startGame(); return false;">START GAME</button>
+            <button id="startBtn" style="background: #00ff88; color: #1a1a2e; border: none; padding: 20px 50px; font-size: 1.5rem; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; -webkit-tap-highlight-color: transparent;" ontouchend="this.click();">START GAME</button>
             
             <div class="leaderboard">
                 <h3>🏆 Top Players</h3>
@@ -1002,18 +991,22 @@
         }
         
         function startGame() {
-            console.log('Starting game...');
             const input = document.getElementById('playerNameInput');
-            const name = input.value.trim() || 'Anonymous';
+            const name = input ? (input.value.trim() || 'Anonymous') : 'Player';
             playerName = name;
             
-            document.getElementById('playerName').textContent = playerName;
-            document.getElementById('startModal').style.display = 'none';
+            const startModal = document.getElementById('startModal');
+            if (startModal) {
+                startModal.style.display = 'none';
+            }
             
-            // Start background music
-            if (musicEnabled) startBgMusic();
+            if (typeof startBgMusic === 'function' && musicEnabled) {
+                startBgMusic();
+            }
             
-            initGame();
+            if (typeof initGame === 'function') {
+                initGame();
+            }
         }
         
         function initGame() {
