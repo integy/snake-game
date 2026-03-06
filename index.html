@@ -323,8 +323,8 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.3</span></h1>
-    <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3 | 💣 Bomb (-20) | ⚡🛡️🧲 Power-ups!</div>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.4</span></h1>
+    <div class="subtitle">🍏 Normal (+10) | 🔴 Red x2 | 🔵 Blue (slow) | 🟡 Gold x3 | 💣 Bomb (-20) | 🌀 Teleport | ❄️ Time Freeze | ⚡🛡️🧲 Power-ups!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
@@ -813,6 +813,7 @@
             document.getElementById('comboStat').style.display = 'none';
             isPaused = false;
             isGameOver = false;
+            isTimeFrozen = false;
             document.getElementById('score').textContent = score;
             document.getElementById('speed').textContent = currentSpeed + 'ms';
             
@@ -841,7 +842,7 @@
             if (timerLoop) clearInterval(timerLoop);
             if (gameMode === 'timer') {
                 timerLoop = setInterval(() => {
-                    if (!isPaused && !isGameOver) {
+                    if (!isPaused && !isGameOver && !isTimeFrozen) {
                         timeLeft--;
                         document.getElementById('timer').textContent = timeLeft;
                         if (timeLeft <= 0) {
@@ -858,20 +859,26 @@
         let powerUp = null;
         let activePowerUp = null;
         let powerUpEndTime = 0;
+        let isTimeFrozen = false;
+        let timeFreezeInterval = null;
         
         function spawnFood() {
-            // Random food type: 50% normal, 18% red, 12% blue, 5% gold, 10% bomb, 5% power-up
+            // Random food type: 40% normal, 15% red, 10% blue, 5% gold, 10% bomb, 5% teleport, 5% timefreeze, 10% power-up
             const rand = Math.random();
-            if (rand < 0.50) {
+            if (rand < 0.40) {
                 foodType = 'normal';
-            } else if (rand < 0.68) {
+            } else if (rand < 0.55) {
                 foodType = 'red'; // 2x points
-            } else if (rand < 0.80) {
+            } else if (rand < 0.65) {
                 foodType = 'blue'; // slow down
-            } else if (rand < 0.85) {
+            } else if (rand < 0.70) {
                 foodType = 'gold'; // 3x points + bonus
-            } else if (rand < 0.95) {
+            } else if (rand < 0.80) {
                 foodType = 'bomb'; // lose points + stun
+            } else if (rand < 0.85) {
+                foodType = 'teleport'; // teleport snake to random position
+            } else if (rand < 0.90) {
+                foodType = 'timeFreeze'; // freeze timer
             } else {
                 // Power-up spawns instead of regular food occasionally
                 const powerRand = Math.random();
@@ -953,6 +960,97 @@
                     if (gameLoop) clearInterval(gameLoop);
                     gameLoop = setInterval(update, currentSpeed);
                 }
+            }, duration);
+        }
+        
+        // Teleport function - moves snake to random position
+        function activateTeleport() {
+            const hint = document.getElementById('modeHint');
+            const originalHint = hint.textContent;
+            
+            // Show teleport message
+            hint.textContent = '🌀 TELEPORTING!';
+            hint.style.color = '#ff00ff';
+            
+            // Create teleport particles at current head position
+            for (let i = 0; i < 30; i++) {
+                createParticles(snake[0].x, snake[0].y, '#ff00ff');
+            }
+            
+            // Play teleport sound
+            playSound('eatGold');
+            
+            // Brief delay then teleport
+            setTimeout(() => {
+                if (isGameOver) return;
+                
+                // Find new random position not on snake body
+                let newX, newY;
+                let attempts = 0;
+                do {
+                    newX = Math.floor(Math.random() * tileCount);
+                    newY = Math.floor(Math.random() * tileCount);
+                    attempts++;
+                } while (isPositionOnSnake(newX, newY) && attempts < 50);
+                
+                // Teleport all snake segments
+                const oldHead = { ...snake[0] };
+                snake[0].x = newX;
+                snake[0].y = newY;
+                
+            }, 150);
+            
+            // Reset hint after delay
+            setTimeout(() => {
+                hint.textContent = originalHint;
+                hint.style.color = '';
+            }, 500);
+        }
+        
+        // Check if position is on snake body
+        function isPositionOnSnake(x, y) {
+            for (let part of snake) {
+                if (part.x === x && part.y === y) return true;
+            }
+            return false;
+        }
+        
+        // Time Freeze function - stops the timer for 5 seconds
+        function activateTimeFreeze() {
+            const duration = 5000; // 5 seconds
+            const hint = document.getElementById('modeHint');
+            const originalHint = hint.textContent;
+            const originalTimerColor = document.getElementById('timer').parentElement.style.color;
+            
+            isTimeFrozen = true;
+            
+            // Show freeze message
+            hint.textContent = '❄️ TIME FROZEN! (+5s)';
+            hint.style.color = '#00ffff';
+            
+            // Make timer display cyan/blue
+            document.getElementById('timer').parentElement.style.color = '#00ffff';
+            
+            // Create ice particles
+            for (let i = 0; i < 20; i++) {
+                createParticles(snake[0].x, snake[0].y, '#00ffff');
+            }
+            
+            // Play freeze sound
+            playSound('eatGold');
+            
+            // Add bonus time to timer
+            if (gameMode === 'timer') {
+                timeLeft += 5;
+                document.getElementById('timer').textContent = timeLeft;
+            }
+            
+            // Reset after duration
+            setTimeout(() => {
+                isTimeFrozen = false;
+                hint.textContent = originalHint;
+                hint.style.color = '';
+                document.getElementById('timer').parentElement.style.color = originalTimerColor || '';
             }, duration);
         }
         
@@ -1081,6 +1179,14 @@
                         points = 0;
                         activatePowerUp('powerMagnet');
                         break;
+                    case 'teleport': // Teleport!
+                        points = 0;
+                        activateTeleport();
+                        break;
+                    case 'timeFreeze': // Time Freeze!
+                        points = 5;
+                        activateTimeFreeze();
+                        break;
                     case 'normal':
                     default:
                         points = 10;
@@ -1124,6 +1230,7 @@
                     case 'blue': particleColor = '#3498db'; break;
                     case 'gold': particleColor = '#ffd700'; break;
                     case 'bomb': particleColor = '#888888'; break;
+                    case 'teleport': particleColor = '#ff00ff'; break;
                     default: particleColor = '#2ed573';
                 }
                 createParticles(food.x, food.y, particleColor);
@@ -1194,6 +1301,14 @@
                     foodColor = '#555555'; // Grey - lose points + stun
                     foodGlow = '#ff0000'; // Red glow for danger
                     break;
+                case 'teleport':
+                    foodColor = '#ff00ff'; // Magenta - teleport
+                    foodGlow = '#ff00ff';
+                    break;
+                case 'timeFreeze':
+                    foodColor = '#00ffff'; // Cyan - time freeze
+                    foodGlow = '#00ffff';
+                    break;
                 case 'powerSpeed':
                     foodColor = '#ff6b35'; // Orange - speed
                     foodGlow = '#ff6b35';
@@ -1226,6 +1341,28 @@
                 ctx.moveTo(food.x * gridSize + gridSize - 4, food.y * gridSize + 4);
                 ctx.lineTo(food.x * gridSize + 4, food.y * gridSize + gridSize - 4);
                 ctx.stroke();
+            } else if (foodType === 'teleport') {
+                // Draw teleport as swirling spiral
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+                // Draw spiral symbol
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🌀', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
+            } else if (foodType === 'timeFreeze') {
+                // Draw time freeze with snowflake
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 1, 0, Math.PI * 2);
+                ctx.fill();
+                // Draw snowflake symbol
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('❄️', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
             } else if (foodType.startsWith('power')) {
                 // Draw power-up with symbol
                 ctx.beginPath();
