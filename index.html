@@ -556,8 +556,8 @@
     </div>
 
     <!-- Help Modal -->
-    <div class="modal-overlay" id="helpModal">
-        <div class="modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+    <div class="modal-overlay" id="helpModal" onclick="if(event.target === this) closeHelp()">
+        <div class="modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
             <h2 style="color: #00ff88; margin-bottom: 20px;">📖 遊戲說明</h2>
             
             <div style="text-align: left; color: #ccc; font-size: 0.95rem; line-height: 1.6;">
@@ -601,8 +601,8 @@
     </div>
 
     <!-- Stats Modal -->
-    <div class="modal-overlay" id="statsModal">
-        <div class="modal" style="max-width: 400px;">
+    <div class="modal-overlay" id="statsModal" onclick="if(event.target === this) closeStats()">
+        <div class="modal" style="max-width: 400px;" onclick="event.stopPropagation()">
             <h2 style="color: #00c8ff; margin-bottom: 20px;">📊 我的統計</h2>
             
             <div style="text-align: left; color: #ccc; font-size: 1rem; line-height: 1.8;">
