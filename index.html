@@ -228,7 +228,7 @@
                 let mult=addCombo();
                 if(ft==='red'){sc+=20*mult;playSound('gold');createParticles(f.x,f.y,'#f44');}
                 else if(ft==='gold'){sc+=30*mult;playSound('gold');createParticles(f.x,f.y,'#fd0');}
-                else if(ft==='bomb'){sc=Math.max(0,sc-10);playSound('bomb');createParticles(f.x,f.y,'#f00');}
+                else if(ft==='bomb'){sc=Math.max(0,sc-10);playSound('bomb');createParticles(f.x,f.y,'#f00');shake=8;}
                 else if(ft==='speed'){activatePowerUp('speed');createParticles(f.x,f.y,'#ff0');}
                 else if(ft==='shield'){activatePowerUp('shield');createParticles(f.x,f.y,'#0ff');}
                 else if(ft==='teleport'){s[0]={x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)};createParticles(f.x,f.y,'#f0f');}
@@ -255,9 +255,27 @@
         }
         
         let pulse=0;
+        let snakeWave=0;
         function draw(){
             pulse+=0.1;
+            snakeWave+=0.15;
+            
+            ctx.save();
+            // Screen shake effect
+            if(shake>0){
+                ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+                shake-=0.5;
+            }
+            
             ctx.fillStyle='#000';ctx.fillRect(0,0,300,300);
+            
+            // Background particles - subtle floating effect
+            ctx.fillStyle='rgba(0,255,0,0.03)';
+            for(let i=0;i<15;i++){
+                let px=(Date.now()/20+i*73)%300;
+                let py=(Date.now()/30+i*97)%300;
+                ctx.beginPath();ctx.arc(px,py,1,0,Math.PI*2);ctx.fill();
+            }
             
             ctx.strokeStyle='rgba(0,255,0,0.06)';
             for(let i=0;i<tc;i++){ctx.beginPath();ctx.moveTo(i*gs,0);ctx.lineTo(i*gs,300);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*gs);ctx.lineTo(300,i*gs);ctx.stroke();}
@@ -269,7 +287,21 @@
             ctx.shadowBlur=15;
             const foodPulse=1+Math.sin(pulse)*0.2;
             if(ft==='red'){ctx.fillStyle='#f44';ctx.shadowColor='#f44';}
-            else if(ft==='gold'){ctx.fillStyle='#fd0';ctx.shadowColor='#fd0';}
+            else if(ft==='gold'){
+                ctx.fillStyle='#fd0';ctx.shadowColor='#fd0';
+                // Lightning effect for gold food
+                ctx.strokeStyle='#ff0';ctx.lineWidth=2;
+                for(let j=0;j<3;j++){
+                    ctx.beginPath();
+                    let lx=f.x*gs+gs/2,ly=f.y*gs+gs/2;
+                    for(let k=0;k<4;k++){
+                        lx+=(Math.random()-0.5)*12;ly+=Math.random()*10;
+                        ctx.lineTo(lx,ly);
+                    }
+                    ctx.stroke();
+                }
+                ctx.lineWidth=1;
+            }
             else if(ft==='bomb'){ctx.fillStyle='#f00';ctx.shadowColor='#f00';}
             else if(ft==='speed'){ctx.fillStyle='#ff0';ctx.shadowColor='#ff0';}
             else if(ft==='shield'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff';}
@@ -280,18 +312,24 @@
             ctx.shadowBlur=0;
             
             const wave=Math.sin(pulse)*0.15+0.85;
+            // Snake wave animation - body segments follow a sine wave
             ctx.shadowBlur=shield?18:10;
             ctx.shadowColor=shield?'#0ff':'#0f0';
             for(let i=0;i<s.length;i++){
                 ctx.globalAlpha=wave-(i*0.05);
                 ctx.fillStyle=shield?'#0ff':'#0f0';
-                ctx.fillRect(s[i].x*gs+1,s[i].y*gs+1,gs-2,gs-2);
+                // Add wave offset for body segments
+                let waveOffset = Math.sin(snakeWave + i * 0.4) * 1.5;
+                let sizeVar = gs-2 + (i>0 ? Math.sin(snakeWave + i * 0.5) * 1.5 : 0);
+                ctx.fillRect(s[i].x*gs+1+waveOffset/2,s[i].y*gs+1,Math.max(gs-4,sizeVar),Math.max(gs-4,sizeVar));
             }
             ctx.globalAlpha=1;ctx.shadowBlur=0;
             
             drawParticles();
             
             if(speedBoost||shield){ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(speedBoost?'⚡SPEED!':'🛡️SHIELD!',5,295);}
+            
+            ctx.restore();
         }
         
         document.onkeydown=e=>{
@@ -303,6 +341,7 @@
         };
         
         let tx,ty;
+        let shake=0;
         c.ontouchstart=e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;};
         c.ontouchend=e=>{
             let dx2=e.changedTouches[0].clientX-tx,dy2=e.changedTouches[0].clientY-ty;
