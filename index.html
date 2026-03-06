@@ -50,7 +50,7 @@
         <button class="btn btn-toggle" id="gyroBtn" onclick="toggleGyro()">📱</button>
     </div>
     <button class="btn" onclick="startGame()">START</button>
-    <div class="subtitle">🍏 🔴 🟡 💣 ⚡🛡️🌀❄️⏸️🎯</div>
+    <div class="subtitle">🍏 🔴 🟡 💣 ⚡🛡️🌀❄️⏸️🎯🌈</div>
     <div class="controls">Arrows/Swipe/Gyro | Space/Tap to pause</div>
     
     <script>
@@ -61,7 +61,7 @@
         let s = [], f = {x:10,y:10}, ft='normal', dx=1, dy=0, sc=0, gL=null, tL=null;
         let mode = 'timer', timeLeft = 60, paused = false, running = false;
         let obstacles = [], particles = [], combo = 0, comboTimer = null;
-        let speedBoost = false, shield = false, slowMo = false;
+        let speedBoost = false, shield = false, slowMo = false, rainbowMode = false, rainbowTimer = null;
         let gyroEnabled = false;
         
         let highScores = JSON.parse(localStorage.getItem('snakeHighScores') || '[]');
@@ -77,6 +77,7 @@
             else if(type==='gold'){osc.frequency.value=1000;gain.gain.value=0.12;osc.start();osc.stop(audioCtx.currentTime+0.1);}
             else if(type==='bomb'){osc.frequency.value=120;osc.type='sawtooth';gain.gain.value=0.15;osc.start();osc.stop(audioCtx.currentTime+0.25);}
             else if(type==='power'){osc.frequency.value=400;gain.gain.value=0.1;osc.start();osc.stop(audioCtx.currentTime+0.15);}
+            else if(type==='rainbow'){osc.frequency.value=523;osc.frequency.setValueAtTime(523,audioCtx.currentTime);osc.frequency.linearRampToValueAtTime(880,audioCtx.currentTime+0.15);gain.gain.value=0.12;osc.start();osc.stop(audioCtx.currentTime+0.2);}
         }
         
         function toggleGyro() {
@@ -115,6 +116,7 @@
             else if(r<0.90)ft='teleport';
             else if(r<0.94)ft='timeFreeze';
             else if(r<0.97)ft='slowMo';
+            else if(r<0.99)ft='rainbow';
             else ft='target';
         }
         
@@ -139,8 +141,13 @@
             if(type==='speed')speedBoost=true;
             else if(type==='shield')shield=true;
             else if(type==='slowMo')slowMo=true;
-            playSound('power');
-            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;slowMo=false;},5000);
+            else if(type==='rainbow'){
+                rainbowMode=true;
+                if(rainbowTimer)clearTimeout(rainbowTimer);
+                rainbowTimer=setTimeout(()=>{rainbowMode=false;},8000);
+            }
+            playSound(type==='rainbow'?'rainbow':'power');
+            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;slowMo=false;rainbowMode=false;},5000);
         }
         
         function addCombo(){
@@ -156,7 +163,7 @@
         
         function startGame(){
             s=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;slowMo=false;combo=0;
+            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;slowMo=false;rainbowMode=false;combo=0;
             timeLeft=mode==='timer'?60:999;obstacles=[];particles=[];
             document.getElementById('comboDisp').style.display='none';
             
@@ -182,7 +189,7 @@
             if(mode==='zen'){if(h.x<0)h.x=tc-1;if(h.x>=tc)h.x=0;if(h.y<0)h.y=tc-1;if(h.y>=tc)h.y=0;}
             else{if(h.x<0||h.x>=tc||h.y<0||h.y>=tc){if(mode==='classic'&&!shield){gameOver();return;}}}
             
-            if(onSnake(h.x,h.y)&&!(shield&&s.length>2)){if(mode==='classic'&&!shield){gameOver();return;}}
+            if(onSnake(h.x,h.y)&&!(shield&&s.length>2)&&!rainbowMode){if(mode==='classic'&&!shield){gameOver();return;}}
             if(onObstacle(h.x,h.y)&&!shield){if(mode==='classic'){gameOver();return;}}
             
             s.unshift(h);
@@ -197,8 +204,9 @@
                 else if(ft==='teleport'){s[0]={x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)};createParticles(f.x,f.y,'#f0f');}
                 else if(ft==='timeFreeze'){if(mode==='timer'){timeLeft+=5;document.getElementById('timeDisp').innerText=timeLeft+'s';}createParticles(f.x,f.y,'#0ff');}
                 else if(ft==='slowMo'){activatePowerUp('slowMo');createParticles(f.x,f.y,'#90f');}
+                else if(ft==='rainbow'){activatePowerUp('rainbow');sc+=(rainbowMode?20:15)*mult;createParticles(f.x,f.y,'#f0f');createParticles(f.x,f.y,'#0ff');createParticles(f.x,f.y,'#ff0');}
                 else if(ft==='target'){sc+=50*mult;createParticles(f.x,f.y,'#f0f');}
-                else{sc+=10*mult;playSound('eat');createParticles(f.x,f.y,'#0f0');}
+                else{sc+=(rainbowMode?20:10)*mult;playSound(rainbowMode?'rainbow':'eat');createParticles(f.x,f.y,rainbowMode?'#f0f':'#0f0');}
                 updateScore();placeFood();
             }else s.pop();
             
@@ -257,18 +265,24 @@
             ctx.shadowBlur=0;
             
             const wave=Math.sin(pulse)*0.15+0.85;
-            ctx.shadowBlur=shield?18:(slowMo?12:10);
-            ctx.shadowColor=shield?'#0ff':(slowMo?'#90f':'#0f0');
+            ctx.shadowBlur=rainbowMode?20:(shield?18:(slowMo?12:10));
+            const rainbowColors=['#f00','#f80','#ff0','#0f0','#0ff','#00f','#f0f'];
             for(let i=0;i<s.length;i++){
                 ctx.globalAlpha=wave-(i*0.05);
-                ctx.fillStyle=shield?'#0ff':(slowMo?'#90f':'#0f0');
+                if(rainbowMode){
+                    const rc=rainbowColors[(i+pulse*2)%rainbowColors.length|0];
+                    ctx.fillStyle=rc;ctx.shadowColor=rc;
+                }else{
+                    ctx.fillStyle=shield?'#0ff':(slowMo?'#90f':'#0f0');
+                    ctx.shadowColor=shield?'#0ff':(slowMo?'#90f':'#0f0');
+                }
                 ctx.fillRect(s[i].x*gs+1,s[i].y*gs+1,gs-2,gs-2);
             }
             ctx.globalAlpha=1;ctx.shadowBlur=0;
             
             drawParticles();
             
-            if(speedBoost||shield||slowMo){ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(speedBoost?'⚡':shield?'🛡️':'⏸️',5,295);}
+            if(speedBoost||shield||slowMo||rainbowMode){ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(speedBoost?'⚡':shield?'🛡️':slowMo?'⏸️':'🌈',5,295);}
         }
         
         document.onkeydown=e=>{
