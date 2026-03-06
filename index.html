@@ -1113,6 +1113,8 @@
                 foodType = 'chainLightning'; // collect all food!
             } else if (rand < 0.85) {
                 foodType = 'reverse'; // reverse controls for 5 seconds
+            } else if (rand < 0.87) {
+                foodType = 'scissors'; // cut snake length!
             } else {
                 // Power-up spawns instead of regular food occasionally
                 const powerRand = Math.random();
@@ -1369,6 +1371,31 @@
             }, 5000);
         }
         
+        // Cut snake function - reduces snake length by 3 segments
+        function cutSnake() {
+            if (snake.length <= 3) {
+                // Can't cut below 3!
+                return;
+            }
+            // Remove last 3 segments
+            const removedParts = snake.splice(snake.length - 3, 3);
+            // Create particles for cut parts
+            removedParts.forEach(part => {
+                for (let i = 0; i < 5; i++) {
+                    createParticles(part.x, part.y, '#ff6b6b');
+                }
+            });
+            // Show hint
+            const hint = document.getElementById('modeHint');
+            const originalText = hint.textContent;
+            hint.textContent = '✂️ Snip! -3 segments!';
+            hint.style.color = '#ff6b6b';
+            setTimeout(() => {
+                hint.textContent = originalText;
+                hint.style.color = '';
+            }, 1500);
+        }
+        
         function update() {
             if (isPaused || isGameOver) return;
             
@@ -1552,6 +1579,12 @@
                         points = 5;
                         activateReverse();
                         break;
+                    case 'scissors': // Cut snake length!
+                        points = -5; // Lose points for cutting
+                        cutSnake(); // Cut snake by 3 segments
+                        screenShake(0.5);
+                        playSound('eat');
+                        break;
                     case 'normal':
                     default:
                         points = 10;
@@ -1630,6 +1663,7 @@
                     case 'gold': particleColor = '#ffd700'; break;
                     case 'bomb': particleColor = '#888888'; break;
                     case 'teleport': particleColor = '#ff00ff'; break;
+                    case 'scissors': particleColor = '#ff6b6b'; break;
                     default: particleColor = '#2ed573';
                 }
                 createParticles(food.x, food.y, particleColor);
@@ -1747,6 +1781,10 @@
                     foodColor = '#ffffff'; // White - ghost
                     foodGlow = '#ffffff';
                     break;
+                case 'scissors':
+                    foodColor = '#ff6b6b'; // Red-pink - cut
+                    foodGlow = '#ff6b6b';
+                    break;
                 case 'normal':
                 default:
                     foodColor = '#2ed573'; // Green - normal
@@ -1815,6 +1853,17 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('🔄', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
+            } else if (foodType === 'scissors') {
+                // Draw scissors with cut symbol
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 1, 0, Math.PI * 2);
+                ctx.fill();
+                // Draw scissors symbol
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('✂️', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
             } else if (foodType.startsWith('power')) {
                 // Draw power-up with symbol
                 ctx.beginPath();
