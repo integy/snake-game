@@ -377,7 +377,7 @@
 </head>
 <body>
     <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.7</span></h1>
-    <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲 | 🎯 Level Up!</div>
+    <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
@@ -1085,12 +1085,14 @@
             } else {
                 // Power-up spawns instead of regular food occasionally
                 const powerRand = Math.random();
-                if (powerRand < 0.33) {
+                if (powerRand < 0.25) {
                     foodType = 'powerSpeed';
-                } else if (powerRand < 0.66) {
+                } else if (powerRand < 0.50) {
                     foodType = 'powerShield';
-                } else {
+                } else if (powerRand < 0.75) {
                     foodType = 'powerMagnet';
+                } else {
+                    foodType = 'powerGhost';
                 }
             }
             
@@ -1125,8 +1127,9 @@
             let powerText = '';
             switch(type) {
                 case 'powerSpeed': powerText = '⚡ SUPER SPEED!'; break;
-                case 'powerShield': powerText = '🛡️ GHOST MODE!'; break;
+                case 'powerShield': powerText = '🛡️ INVINCIBLE!'; break;
                 case 'powerMagnet': powerText = '🧲 FOOD MAGNET!'; break;
+                case 'powerGhost': powerText = '👻 GHOST MODE!'; break;
             }
             
             hint.textContent = powerText + ' (5s)';
@@ -1268,9 +1271,10 @@
             
             // Handle wall collision based on mode
             const hasShield = activePowerUp === 'powerShield';
+            const isGhostMode = activePowerUp === 'powerGhost';
             
-            if (gameMode === 'zen' || hasShield) {
-                // Wrap around in Zen mode or when shielded
+            if (gameMode === 'zen' || hasShield || isGhostMode) {
+                // Wrap around in Zen mode, when shielded, or in ghost mode
                 if (head.x < 0) head.x = tileCount - 1;
                 if (head.x >= tileCount) head.x = 0;
                 if (head.y < 0) head.y = tileCount - 1;
@@ -1315,28 +1319,32 @@
                 }
             }
             
-            // Self collision - die in timer/classic, ignore in zen or when shielded
-            if (gameMode !== 'zen' && !hasShield) {
+            // Self collision - die in timer/classic, ignore in zen or when shielded/ghost
+            if (gameMode !== 'zen' && !hasShield && !isGhostMode) {
                 for (let part of snake) {
                     if (head.x === part.x && head.y === part.y) {
                         gameOver();
                         return;
                     }
                 }
-            } else if (gameMode !== 'zen' && hasShield) {
-                // Shield mode - just don't grow if hitting self
-                let hitSelf = false;
-                for (let i = 1; i < snake.length; i++) {
-                    if (head.x === snake[i].x && head.y === snake[i].y) {
-                        hitSelf = true;
-                        break;
+            } else if (gameMode !== 'zen' && (hasShield || isGhostMode)) {
+                // Shield/Ghost mode - just don't grow if hitting self, but keep moving
+                // Ghost mode can pass through itself completely!
+                if (!isGhostMode) {
+                    let hitSelf = false;
+                    for (let i = 1; i < snake.length; i++) {
+                        if (head.x === snake[i].x && head.y === snake[i].y) {
+                            hitSelf = true;
+                            break;
+                        }
+                    }
+                    if (hitSelf) {
+                        dx = 0;
+                        dy = 0;
+                        return;
                     }
                 }
-                if (hitSelf) {
-                    dx = 0;
-                    dy = 0;
-                    return;
-                }
+                // Ghost mode: allow passing through self - no action needed
             } else {
                 // In zen mode, just don't grow if hitting self
                 let hitSelf = false;
@@ -1611,6 +1619,10 @@
                     foodColor = '#ec4899'; // Pink - magnet
                     foodGlow = '#ec4899';
                     break;
+                case 'powerGhost':
+                    foodColor = '#ffffff'; // White - ghost
+                    foodGlow = '#ffffff';
+                    break;
                 case 'normal':
                 default:
                     foodColor = '#2ed573'; // Green - normal
@@ -1667,6 +1679,7 @@
                 if (foodType === 'powerSpeed') symbol = '⚡';
                 else if (foodType === 'powerShield') symbol = '🛡️';
                 else if (foodType === 'powerMagnet') symbol = '🧲';
+                else if (foodType === 'powerGhost') symbol = '👻';
                 ctx.fillText(symbol, food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
             } else {
                 ctx.beginPath();
@@ -1676,6 +1689,10 @@
             ctx.shadowBlur = 0;
             
             // Snake
+            const isGhostMode = activePowerUp === 'powerGhost';
+            const snakeAlpha = isGhostMode ? 0.4 : 1.0;
+            ctx.globalAlpha = snakeAlpha;
+            
             snake.forEach((part, index) => {
                 const gradient = ctx.createRadialGradient(
                     part.x * gridSize + gridSize/2, part.y * gridSize + gridSize/2, 0,
@@ -1696,6 +1713,7 @@
                 ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
                 ctx.shadowBlur = 0;
             });
+            ctx.globalAlpha = 1.0;
         }
         
         async function gameOver() {
