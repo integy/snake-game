@@ -588,6 +588,10 @@
         let gameLevel = 1;
         let lastLevelScore = 0;
         
+        // Obstacles system (rocks in arena)
+        let obstacles = [];
+        let maxObstacles = 5;
+        
         // Achievements system
         let achievements = {
             firstGold: { name: "🌟 First Gold", desc: "Eat your first gold food", unlocked: false },
@@ -921,6 +925,18 @@
             gameLevel = 1;
             lastLevelScore = 0;
             
+            // Initialize obstacles for classic mode
+            obstacles = [];
+            if (gameMode === 'classic') {
+                const numObstacles = Math.floor(Math.random() * 3) + 3; // 3-5 rocks
+                for (let i = 0; i < numObstacles; i++) {
+                    obstacles.push({
+                        x: Math.floor(Math.random() * (tileCount - 2)) + 1,
+                        y: Math.floor(Math.random() * (tileCount - 2)) + 1
+                    });
+                }
+            }
+            
             // Reset achievement tracking
             bombsHit = 0;
             zenTime = 0;
@@ -1206,6 +1222,38 @@
                 }
             }
             
+            // Check obstacle collision (classic mode)
+            for (let obs of obstacles) {
+                if (head.x === obs.x && head.y === obs.y) {
+                    // Hit obstacle - stun and lose points
+                    screenShake(10);
+                    score = Math.max(0, score - 10);
+                    playSound('eatBomb');
+                    
+                    // Show score popup
+                    showScorePopup(snake[0].x * gridSize, snake[0].y * gridSize, -10, 0);
+                    
+                    // Reverse direction
+                    dx = -dx;
+                    dy = -dy;
+                    
+                    // Add particle effect
+                    for (let i = 0; i < 10; i++) {
+                        particles.push({
+                            x: head.x,
+                            y: head.y,
+                            vx: (Math.random() - 0.5) * 3,
+                            vy: (Math.random() - 0.5) * 3,
+                            life: 20,
+                            color: '#ff6b35'
+                        });
+                    }
+                    
+                    document.getElementById('score').textContent = score;
+                    return;
+                }
+            }
+            
             // Self collision - die in timer/classic, ignore in zen or when shielded
             if (gameMode !== 'zen' && !hasShield) {
                 for (let part of snake) {
@@ -1450,6 +1498,18 @@
                 ctx.lineTo(canvas.width, i * gridSize);
                 ctx.stroke();
             }
+            
+            // Draw obstacles (rocks)
+            obstacles.forEach(obs => {
+                ctx.fillStyle = '#4a4a4a';
+                ctx.shadowColor = '#ff6b35';
+                ctx.shadowBlur = 5;
+                ctx.fillRect(obs.x * gridSize + 1, obs.y * gridSize + 1, gridSize - 2, gridSize - 2);
+                // Add rock highlight
+                ctx.fillStyle = '#6a6a6a';
+                ctx.fillRect(obs.x * gridSize + 3, obs.y * gridSize + 3, gridSize/3, gridSize/3);
+                ctx.shadowBlur = 0;
+            });
             
             // Food - different colors for different types
             let foodColor, foodGlow;
