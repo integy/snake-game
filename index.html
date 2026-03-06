@@ -10,50 +10,46 @@
         h1{font-size:20px;margin-bottom:5px;text-shadow:0 0 10px #0f0}
         #c{border:2px solid #0f0;background:#000;max-width:95vw;max-height:40vh}
         .btn{background:#0f0;color:#000;border:none;padding:8px 12px;font-size:12px;margin:2px;border-radius:4px;cursor:pointer}
-        .s{display:flex;gap:8px;font-size:11px;margin-bottom:5px}
+        .s{display:flex;gap:6px;font-size:10px;margin-bottom:5px;flex-wrap:wrap;justify-content:center}
     </style>
 </head>
 <body>
     <h1>SNAKE</h1>
-    <div class="s"><span>S:<span id="sc">0</span></span><span>Lv:<span id="lv">1</span></span><span>T:<span id="tm">60</span></span><span>❤:<span id="hp">1</span></span><span>B:<span id="bst">0</span></span></div>
+    <div class="s"><span>S:<span id="sc">0</span></span><span>Lv:<span id="lv">1</span></span><span>T:<span id="tm">60</span></span><span>❤:<span id="hp">1</span></span><span>x<span id="cmb">1</span></span><span>B:<span id="bst">0</span></span></div>
     <canvas id="c" width="280" height="280"></canvas>
     <div><button class="btn" onclick="setMode('timer')">⏱</button><button class="btn" onclick="setMode('classic')">💀</button><button class="btn" onclick="setMode('zen')">🧘</button></div>
     <button class="btn" onclick="start()">START</button>
-    <div style="font-size:10px;color:#666;margin-top:5px">Get ❤ in Classic mode for extra life!</div>
+    <div style="font-size:9px;color:#666;margin-top:5px">🧲 Magnetic food attracts items! | Press M to activate</div>
     <script>
         const cv=document.getElementById('c'),ctx=cv.getContext('2d');
         const gs=14,tc=20;
         let s=[],f={x:10,y:10},ft='n',dx=1,dy=0,sc=0,lv=1,gL,tL,mode='timer',tm=60,ob=[],pt=[],cmb=0,cmbT;
-        let spd=false,sh=false,sl=false,rnb=false,d2=false,hp=1,xp=false;
+        let spd=false,sh=false,sl=false,rnb=false,d2=false,xp=false,mg=false;
         
         let hs=JSON.parse(localStorage.getItem('hs')||'[]');
         document.getElementById('bst').innerText=hs[0]?.score||0;
         
-        // Warp power-up: 撞牆時傳送而不是死亡
-        let warp=false,warpUsed=false;
-        
         function pf(){
             let x=Math.random();
-            if(x<0.25)ft='n';
-            else if(x<0.37)ft='r';
-            else if(x<0.47)ft='g';
-            else if(x<0.57)ft='b';
-            else if(x<0.65)ft='sp';
-            else if(x<0.72)ft='sh';
-            else if(x<0.78)ft='sl';
-            else if(x<0.84)ft='d2';
-            else if(x<0.90)ft='xp';
-            else if(x<0.95)ft='warp';
-            else ft='hp';
+            if(x<0.23)ft='n';
+            else if(x<0.35)ft='r';
+            else if(x<0.45)ft='g';
+            else if(x<0.55)ft='b';
+            else if(x<0.63)ft='sp';
+            else if(x<0.70)ft='sh';
+            else if(x<0.76)ft='sl';
+            else if(x<0.82)ft='d2';
+            else if(x<0.88)ft='xp';
+            else ft='mg';
             let t=0;
             do{f={x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)};t++;}while((s.some(p=>p.x===f.x&&p.y===f.y))&&(ob.some(o=>o.x===f.x&&o.y===f.y)))&&t<100);
         }
         
         function setMode(m){mode=m;document.getElementById('tm').style.display=m==='zen'?'none':'inline';}
         
-        function cp(x,y,c){for(let i=0;i<8;i++)pt.push({x:x*gs+gs/2,y:y*gs+gs/2,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,l:1,c})}
-        function upt(){pt=pt.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.l-=0.05;return p.l>0})}
-        function dpt(){for(let p of pt){ctx.globalAlpha=p.l;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,2,0,6.28);ctx.fill()}ctx.globalAlpha=1}
+        function cp(x,y,c){for(let i=0;i<10;i++)pt.push({x:x*gs+gs/2,y:y*gs+gs/2,vx:(Math.random()-0.5)*8,vy:(Math.random()-0.5)*8,l:1,c})}
+        function upt(){pt=pt.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.l-=0.04;return p.l>0})}
+        function dpt(){for(let p of pt){ctx.globalAlpha=p.l;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,3,0,6.28);ctx.fill()}ctx.globalAlpha=1}
         
         function pu(t){
             if(cmbT)clearTimeout(cmbT);
@@ -63,17 +59,17 @@
             else if(t==='rnb')rnb=true;
             else if(t==='d2')d2=true;
             else if(t==='xp')xp=true;
-            else if(t==='warp'){warp=true;warpUsed=false;}
-            cmbT=setTimeout(()=>{spd=sh=sl=rnb=d2=xp=false;warp=false;warpUsed=false;},5000);
+            else if(t==='mg')mg=true;
+            cmbT=setTimeout(()=>{spd=sh=sl=rnb=d2=xp=mg=false},5000);
         }
         
-        function cmbF(){cmb++;let m=Math.min(cmb,5);if(cmbT)clearTimeout(cmbT);cmbT=setTimeout(()=>{cmb=0},2000);return m;}
+        function cmbF(){cmb++;let m=Math.min(cmb,5);document.getElementById('cmb').innerText=m;if(cmbT)clearTimeout(cmbT);cmbT=setTimeout(()=>{cmb=0;document.getElementById('cmb').innerText=1},2000);return m;}
         
         function chkLv(){let newLv=Math.floor(sc/100)+1;if(newLv>lv){lv=newLv;document.getElementById('lv').innerText=lv;if(gL){clearInterval(gL);gL=setInterval(upd,Math.max(40,100-lv*5))}cp(s[0].x,s[0].y,'#ff0')}}
         
         function start(){
-            s=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];dx=1;dy=0;sc=0;lv=1;tm=mode==='timer'?60:999;spd=sh=sl=rnb=d2=xp=false;warp=warpUsed=false;cmb=0;hp=mode==='classic'?1:999;ob=[];pt=[];
-            document.getElementById('lv').innerText=1;document.getElementById('hp').innerText=hp;
+            s=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];dx=1;dy=0;sc=0;lv=1;tm=mode==='timer'?60:999;spd=sh=sl=rnb=d2=xp=mg=false;cmb=0;hp=mode==='classic'?1:999;ob=[];pt=[];
+            document.getElementById('lv').innerText=1;document.getElementById('hp').innerText=hp;document.getElementById('cmb').innerText=1;
             if(mode==='classic')for(let i=0;i<4;i++)ob.push({x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)});
             pf();scU();
             if(gL)clearInterval(gL);if(tL)clearInterval(tL);
@@ -83,22 +79,23 @@
         
         function upd(){
             let h={x:s[0].x+dx,y:s[0].y+dy};
+            
+            // Magnetic effect - pull food towards snake
+            if(mg && f.x!==h.x || f.y!==h.y){
+                if(Math.abs(f.x-h.x)>Math.abs(f.y-h.y)){
+                    if(f.x<h.x)f.x++;else if(f.x>h.x)f.x--;
+                }else{
+                    if(f.y<h.y)f.y++;else if(f.y>h.y)f.y--;
+                }
+                if(f.x===h.x && f.y===h.y){
+                    mg=false; // Stop pulling when reached
+                }
+            }
+            
             if(mode==='zen'){if(h.x<0)h.x=tc-1;if(h.x>=tc)h.x=0;if(h.y<0)h.y=tc-1;if(h.y>=tc)h.y=0}
-            else if(h.x<0||h.x>=tc||h.y<0||h.y>=tc){
-                if(warp && !warpUsed){
-                    // Warp to opposite side
-                    if(h.x<0)h.x=tc-1;
-                    else if(h.x>=tc)h.x=0;
-                    else if(h.y<0)h.y=tc-1;
-                    else if(h.y>=tc)h.y=0;
-                    warpUsed=true;
-                    cp(h.x,h.y,'#a0f');
-                }else if(mode==='classic'&&!sh){
-                    if(hp>0){hp--;document.getElementById('hp').innerText=hp;s.pop();cp(s[0].x,s[0].y,'#0f0')}else{ov();return}
-                }else if(mode==='timer'){ov();return}
-            }}
-            if(s.some(p=>p.x===h.x&&p.y===h.y)&&!(sh&&s.length>2)&&!rnb&&!xp){if(mode==='classic'){if(hp>0){hp--;document.getElementById('hp').innerText=hp;s.pop();cp(s[0].x,s[0].y,'#0f0')}else{ov();return}}}
-            if(ob.some(o=>o.x===h.x&&o.y===h.y)&&!sh){if(mode==='classic'){if(hp>0){hp--;document.getElementById('hp').innerText=hp;s.pop();ob=ob.filter(o=>o.x!==h.x||o.y!==h.y);cp(h.x,h.y,'#0f0')}else{ov();return}}}
+            else if(h.x<0||h.x>=tc||h.y<0||h.y>=tc){if(mode==='classic'&&!sh){if(hp>0){hp--;document.getElementById('hp').innerText=hp;s.pop();cp(s[0].x,s[0].y,'#f00')}else{ov();return}}}
+            if(s.some(p=>p.x===h.x&&p.y===h.y)&&!(sh&&s.length>2)&&!rnb&&!xp){if(mode==='classic'){if(hp>0){hp--;document.getElementById('hp').innerText=hp;s.pop();cp(s[0].x,s[0].y,'#f00')}else{ov();return}}}
+            if(ob.some(o=>o.x===h.x&&o.y===h.y)&&!sh){if(mode==='classic'){if(hp>0){hp--;document.getElementById('hp').innerText=hp;s.pop();ob=ob.filter(o=>o.x!==h.x||o.y!==h.y);cp(h.x,h.y,'#f00')}else{ov();return}}}
             s.unshift(h);
             if(h.x===f.x&&h.y===f.y){
                 let m=cmbF(),pm=d2?2:1;
@@ -110,8 +107,7 @@
                 else if(ft==='sl'){pu('sl');cp(f.x,f.y,'#90f')}
                 else if(ft==='d2'){pu('d2');cp(f.x,f.y,'#ff0')}
                 else if(ft==='xp'){pu('xp');sc+=25*m*pm;cp(f.x,f.y,'#f0f')}
-                else if(ft==='warp'){pu('warp');cp(f.x,f.y,'#a0f')}
-                else if(ft==='hp'){if(mode==='classic'){hp++;document.getElementById('hp').innerText=hp;cp(f.x,f.y,'#f00')}else{sc+=10*m*pm;cp(f.x,f.y,'#0f0')}}
+                else if(ft==='mg'){pu('mg');cp(f.x,f.y,'#0f0');mg=true}
                 else{sc+=10*m*pm;cp(f.x,f.y,'#0f0')}
                 chkLv();scU();pf();
             }else s.pop();
@@ -125,8 +121,15 @@
         function dr(){
             pl+=0.1;
             ctx.fillStyle='#000';ctx.fillRect(0,0,280,280);
+            // Grid
+            ctx.strokeStyle='rgba(0,255,0,0.05)';
+            for(let i=0;i<=tc;i++){ctx.beginPath();ctx.moveTo(i*gs,0);ctx.lineTo(i*gs,280);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*gs);ctx.lineTo(280,i*gs);ctx.stroke()}
+            // Obstacles
             ctx.fillStyle='#444';for(let o of ob)ctx.fillRect(o.x*gs+1,o.y*gs+1,gs-2,gs-2);
-            ctx.shadowBlur=12;
+            // Magnetic field visual
+            if(mg){ctx.strokeStyle='rgba(0,255,0,0.3)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(s[0].x*gs+gs/2,s[0].y*gs+gs/2,gs*4,0,6.28);ctx.stroke()}
+            // Food
+            ctx.shadowBlur=15;
             let pc=1+Math.sin(pl)*0.2;
             if(ft==='r'){ctx.fillStyle='#f44';ctx.shadowColor='#f44'}
             else if(ft==='g'){ctx.fillStyle='#fd0';ctx.shadowColor='#fd0'}
@@ -136,25 +139,26 @@
             else if(ft==='sl'){ctx.fillStyle='#90f';ctx.shadowColor='#90f'}
             else if(ft==='d2'){ctx.fillStyle='#ff0';ctx.shadowColor='#ff0'}
             else if(ft==='xp'){ctx.fillStyle='#f0f';ctx.shadowColor='#f0f'}
-            else if(ft==='warp'){ctx.fillStyle='#a0f';ctx.shadowColor='#a0f'}
-            else if(ft==='hp'){ctx.fillStyle='#f00';ctx.shadowColor='#f00'}
+            else if(ft==='mg'){ctx.fillStyle='#0f0';ctx.shadowColor='#0f0'}
             else{ctx.fillStyle='#0f0';ctx.shadowColor='#0f0'}
             ctx.fillRect(f.x*gs+2,f.y*gs+2,(gs-4)*pc,(gs-4)*pc);
-            ctx.shadowBlur=sh?15:8;
-            ctx.shadowColor=sh?'#0ff':(xp?'#f0f':(rnb?'hsl('+(pl*30%360)+',100%,50%)':(d2?'#ff0':'#0f0')));
+            // Snake
+            ctx.shadowBlur=sh||mg?20:10;
+            ctx.shadowColor=sh?'#0ff':(mg?'#0f0':(xp?'#f0f':(rnb?'hsl('+(pl*30%360)+',100%,50%)':(d2?'#ff0':'#0f0'))));
             let wa=Math.sin(pl)*0.15+0.85;
             for(let i=0;i<s.length;i++){
                 ctx.globalAlpha=wa-(i*0.05);
-                ctx.fillStyle=sh?'#0ff':(xp?'#f0f':(rnb?'hsl('+(pl*30+i*20)%360+',100%,50%)':(d2?'#ff0':'#0f0')));
+                ctx.fillStyle=sh?'#0ff':(mg?'#0f0':(xp?'#f0f':(rnb?'hsl('+(pl*30+i*20)%360+',100%,50%)':(d2?'#ff0':'#0f0'))));
                 ctx.fillRect(s[i].x*gs+1,s[i].y*gs+1,gs-2,gs-2);
             }
             ctx.globalAlpha=1;ctx.shadowBlur=0;dpt();
-            if(spd||sh||sl||rnb||d2||xp||warp){ctx.fillStyle='#fff';ctx.font='10px';ctx.fillText(spd?'⚡':sh?'🛡️':sl?'⏸️':rnb?'🌈':d2?'🎲':xp?'🔮':warp?'🌀',5,275)}
+            // Power indicator
+            if(spd||sh||sl||rnb||d2||xp||mg){ctx.fillStyle='#fff';ctx.font='9px';ctx.fillText(spd?'⚡':sh?'🛡️':sl?'⏸️':rnb?'🌈':d2?'🎲':xp?'🔮':'🧲',5,275)}
         }
         
         document.onkeydown=e=>{
             if(e.key==='ArrowUp'&&dy!==1){dx=0;dy=-1}
-            else if(e.key==='ArrowDown'&&dy!==-1){dx=0;dy=1}
+            else if(e.key==='ArrowDown'&&dy!==1){dx=0;dy=1}
             else if(e.key==='ArrowLeft'&&dx!==1){dx=-1;dy=0}
             else if(e.key==='ArrowRight'&&dx!==-1){dx=1;dy=0}
         };
