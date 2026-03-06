@@ -28,6 +28,7 @@
     <div class="stats">
         <span class="stat-box">Score: <span id="scoreDisp">0</span></span>
         <span class="stat-box" id="comboDisp" style="display:none">x1</span>
+        <span class="stat-box" id="doubleDisp" style="display:none;color:#ff0">🎲2x</span>
         <span class="stat-box" id="timeDisp">60s</span>
         <span class="stat-box" id="modeDisp">Timer</span>
         <span class="stat-box stat-high">🏆<span id="highDisp">0</span></span>
@@ -40,7 +41,7 @@
         <button class="btn btn-toggle" id="gyroBtn" onclick="toggleGyro()">📱</button>
     </div>
     <button class="btn" onclick="startGame()">START</button>
-    <div class="subtitle">🍏 🔴 🟡 💣 ⚡🛡️🌀❄️⏸️🎯🌈</div>
+    <div class="subtitle">🍏 🔴 🟡 💣 ⚡🛡️🌀❄️⏸️🎯🎲🌈</div>
     <div class="controls">Arrows/Swipe/Gyro | Space/Tap pause</div>
     
     <script>
@@ -51,7 +52,7 @@
         let s = [], f = {x:10,y:10}, ft='normal', dx=1, dy=0, sc=0, gL=null, tL=null;
         let mode = 'timer', timeLeft = 60, paused = false, running = false;
         let obstacles = [], particles = [], combo = 0, comboTimer = null;
-        let speedBoost = false, shield = false, slowMo = false, rainbow = false;
+        let speedBoost = false, shield = false, slowMo = false, rainbow = false, doublePoints = false;
         let gyroEnabled = false;
         
         let highScores = JSON.parse(localStorage.getItem('snakeHighScores') || '[]');
@@ -109,6 +110,7 @@
             else if(r<0.90)ft='timeFreeze';
             else if(r<0.93)ft='slowMo';
             else if(r<0.96)ft='target';
+            else if(r<0.98)ft='double';
             else ft='rainbow';
         }
         
@@ -134,8 +136,9 @@
             else if(type==='shield')shield=true;
             else if(type==='slowMo')slowMo=true;
             else if(type==='rainbow'){rainbow=true;playSound('rainbow');}
-            playSound('power');
-            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;slowMo=false;rainbow=false;},8000);
+            else if(type==='double'){doublePoints=true;document.getElementById('doubleDisp').style.display='inline';playSound('combo');}
+            if(type!=='rainbow')playSound('power');
+            comboTimer=setTimeout(()=>{speedBoost=false;shield=false;slowMo=false;rainbow=false;doublePoints=false;document.getElementById('doubleDisp').style.display='none';},8000);
         }
         
         function addCombo(){
@@ -151,9 +154,10 @@
         
         function startGame(){
             s=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;slowMo=false;rainbow=false;combo=0;
+            dx=1;dy=0;sc=0;paused=false;speedBoost=false;shield=false;slowMo=false;rainbow=false;doublePoints=false;combo=0;
             timeLeft=mode==='timer'?60:999;obstacles=[];particles=[];
             document.getElementById('comboDisp').style.display='none';
+            document.getElementById('doubleDisp').style.display='none';
             
             if(mode==='classic')for(let i=0;i<4;i++)obstacles.push({x:Math.floor(Math.random()*tc),y:Math.floor(Math.random()*tc)});
             
@@ -184,8 +188,8 @@
             
             if(h.x===f.x&&h.y===f.y){
                 let mult=addCombo();
-                if(ft==='red'){sc+=20*mult;playSound('gold');createParticles(f.x,f.y,'#f44');}
-                else if(ft==='gold'){sc+=30*mult;playSound('gold');createParticles(f.x,f.y,'#fd0');}
+                if(ft==='red'){sc+=(doublePoints?40:20)*mult;playSound('gold');createParticles(f.x,f.y,'#f44');}
+                else if(ft==='gold'){sc+=(doublePoints?60:30)*mult;playSound('gold');createParticles(f.x,f.y,'#fd0');}
                 else if(ft==='bomb'){sc=Math.max(0,sc-10);playSound('bomb');createParticles(f.x,f.y,'#f00');}
                 else if(ft==='speed'){activatePowerUp('speed');createParticles(f.x,f.y,'#ff0');}
                 else if(ft==='shield'){activatePowerUp('shield');createParticles(f.x,f.y,'#0ff');}
@@ -193,8 +197,9 @@
                 else if(ft==='timeFreeze'){if(mode==='timer'){timeLeft+=5;document.getElementById('timeDisp').innerText=timeLeft+'s';}createParticles(f.x,f.y,'#0ff');}
                 else if(ft==='slowMo'){activatePowerUp('slowMo');createParticles(f.x,f.y,'#90f');}
                 else if(ft==='target'){sc+=50*mult;createParticles(f.x,f.y,'#f0f');}
+                else if(ft==='double'){activatePowerUp('double');sc+=10*mult;createParticles(f.x,f.y,'#ff0');createParticles(f.x,f.y,'#fff');}
                 else if(ft==='rainbow'){activatePowerUp('rainbow');sc+=15*mult;createParticles(f.x,f.y,'#f0f');}
-                else{sc+=10*mult;playSound('eat');createParticles(f.x,f.y,'#0f0');}
+                else{sc+=(doublePoints?20:10)*mult;playSound('eat');createParticles(f.x,f.y,doublePoints?'#ff0':'#0f0');}
                 updateScore();placeFood();
             }else s.pop();
             
@@ -255,9 +260,11 @@
             else if(ft==='timeFreeze'){ctx.fillStyle='#0ff';ctx.shadowColor='#0ff';}
             else if(ft==='slowMo'){ctx.fillStyle='#90f';ctx.shadowColor='#90f';}
             else if(ft==='target'){ctx.fillStyle='#f0f';ctx.shadowColor='#f0f';}
+            else if(ft==='double'){ctx.fillStyle='#ff0';ctx.shadowColor='#ff0';}
             else if(ft==='rainbow'){ctx.fillStyle=`hsl(${pulse*50%360},100%,50%)`;ctx.shadowColor=ctx.fillStyle;}
             else{ctx.fillStyle='#0f0';ctx.shadowColor='#0f0';}
             ctx.fillRect(f.x*gs+2,f.y*gs+2,(gs-4)*foodPulse,(gs-4)*foodPulse);
+            if(ft==='double'){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(f.x*gs+2,f.y*gs+2,(gs-4)*foodPulse,(gs-4)*foodPulse);}
             ctx.shadowBlur=0;
             
             const wave=Math.sin(pulse)*0.15+0.85;
