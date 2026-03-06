@@ -378,7 +378,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v8.2</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v8.3</span></h1>
     <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡ Chain | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
@@ -521,21 +521,22 @@
     </div>
 
     <!-- Start Modal -->
-    <div class="modal-overlay" id="startModal" style="touch-action: manipulation;">
-        <div class="modal" style="max-width: 90%;">
-            <h2>🎮 Welcome!</h2>
-            <p style="margin-bottom: 20px; color: #888;">Enter your name</p>
+    <div class="modal-overlay" id="startModal" style="touch-action: manipulation; cursor: pointer;" onclick="startGame()">
+        <div class="modal" style="max-width: 90%; cursor: default;" onclick="event.stopPropagation()">
+            <h2>🎮 HENTAI SNAKE</h2>
+            <p style="margin-bottom: 20px; color: #888;">Tap anywhere to start!</p>
             
             <div style="margin-bottom: 20px;">
                 <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;">Mode:</p>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button class="mode-btn active" onclick="selectMode('timer', this)">⏱️ Timer</button>
-                    <button class="mode-btn" onclick="selectMode('classic', this)">💀 Classic</button>
-                    <button class="mode-btn" onclick="selectMode('zen', this)">🧘 Zen</button>
+                    <button class="mode-btn active" onclick="selectMode('timer', this); event.stopPropagation()">⏱️ Timer</button>
+                    <button class="mode-btn" onclick="selectMode('classic', this); event.stopPropagation()">💀 Classic</button>
+                    <button class="mode-btn" onclick="selectMode('zen', this); event.stopPropagation()">🧘 Zen</button>
                 </div>
             </div>
             
-            <a href="javascript:startGame()" style="display: block; background: #00ff88; color: #1a1a2e; border: none; padding: 20px; font-size: 1.5rem; border-radius: 15px; cursor: pointer; font-weight: bold; text-decoration: none; margin-top: 20px;">START GAME</a>
+            <p style="color: #666; font-size: 0.8rem; margin-top: 20px;">(or tap START button below)</p>
+            <a href="javascript:startGame()" style="display: block; background: #00ff88; color: #1a1a2e; border: none; padding: 20px; font-size: 1.5rem; border-radius: 15px; cursor: pointer; font-weight: bold; text-decoration: none; margin-top: 10px;">START GAME</a>
             
             <div class="leaderboard">
                 <h3>🏆 Top Players</h3>
