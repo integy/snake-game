@@ -565,9 +565,10 @@
     </div>
 
     <!-- Help Modal -->
-    <div class="modal-overlay" id="helpModal" onclick="if(event.target === this) closeHelp()">
-        <div class="modal" style="max-width: 500px; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
-            <h2 style="color: #00ff88; margin-bottom: 20px;">📖 遊戲說明 <button onclick="closeHelp()" style="float: right; background: none; border: none; color: #ff4757; font-size: 1.5rem; cursor: pointer;">✕</button></h2>
+    <div class="modal-overlay" id="helpModal" style="touch-action: manipulation;">
+        <div class="modal" style="max-width: 90%; max-height: 80vh; overflow-y: auto;">
+            <h2 style="color: #00ff88; margin-bottom: 10px; padding-right: 40px;">📖 遊戲說明</h2>
+            <button onclick="closeHelp()" ontouchend="closeHelp()" style="position: absolute; top: 15px; right: 15px; background: #ff4757; border: none; color: white; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
             
             <div style="text-align: left; color: #ccc; font-size: 0.95rem; line-height: 1.6;">
                 <h3 style="color: #ffd700; margin-top: 15px;">🎮 操作</h3>
@@ -610,9 +611,10 @@
     </div>
 
     <!-- Stats Modal -->
-    <div class="modal-overlay" id="statsModal" onclick="if(event.target === this) closeStats()">
-        <div class="modal" style="max-width: 400px;" onclick="event.stopPropagation()">
-            <h2 style="color: #00c8ff; margin-bottom: 20px;">📊 我的統計 <button onclick="closeStats()" style="float: right; background: none; border: none; color: #ff4757; font-size: 1.5rem; cursor: pointer;">✕</button></h2>
+    <div class="modal-overlay" id="statsModal" style="touch-action: manipulation;">
+        <div class="modal" style="max-width: 90%; max-height: 80vh;">
+            <h2 style="color: #00c8ff; margin-bottom: 10px; padding-right: 40px;">📊 我的統計</h2>
+            <button onclick="closeStats()" ontouchend="closeStats()" style="position: absolute; top: 15px; right: 15px; background: #ff4757; border: none; color: white; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
             
             <div style="text-align: left; color: #ccc; font-size: 1rem; line-height: 1.8;">
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0;">
