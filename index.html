@@ -520,31 +520,15 @@
         <p>Press <kbd>Space</kbd> to pause</p>
     </div>
 
-    <!-- Start Modal -->
-    <div class="modal-overlay" id="startModal" style="touch-action: manipulation; cursor: pointer;" onclick="startGame()">
-        <div class="modal" style="max-width: 90%; cursor: default;" onclick="event.stopPropagation()">
-            <h2>🎮 HENTAI SNAKE</h2>
-            <p style="margin-bottom: 20px; color: #888;">Tap anywhere to start!</p>
-            
-            <div style="margin-bottom: 20px;">
-                <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;">Mode:</p>
-                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button class="mode-btn active" onclick="selectMode('timer', this); event.stopPropagation()">⏱️ Timer</button>
-                    <button class="mode-btn" onclick="selectMode('classic', this); event.stopPropagation()">💀 Classic</button>
-                    <button class="mode-btn" onclick="selectMode('zen', this); event.stopPropagation()">🧘 Zen</button>
-                </div>
-            </div>
-            
-            <p style="color: #666; font-size: 0.8rem; margin-top: 20px;">(or tap START button below)</p>
-            <a href="javascript:startGame()" style="display: block; background: #00ff88; color: #1a1a2e; border: none; padding: 20px; font-size: 1.5rem; border-radius: 15px; cursor: pointer; font-weight: bold; text-decoration: none; margin-top: 10px;">START GAME</a>
-            
-            <div class="leaderboard">
-                <h3>🏆 Top Players</h3>
-                <div class="leaderboard-list" id="leaderboard">
-                    <div class="loading">Loading...</div>
-                </div>
-            </div>
+    <!-- Start Modal - simplified for mobile -->
+    <div id="startModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a2e;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <h2 style="color:#00ff88;font-size:2.5rem;margin-bottom:10px;">🐍 HENTAI SNAKE</h2>
+        <div style="margin:20px 0;">
+            <button id="modeTimer" style="background:#00ff88;color:#1a1a2e;padding:15px 20px;border:none;border-radius:10px;font-size:1.2rem;margin:5px;">⏱️ Timer</button>
+            <button id="modeClassic" style="background:#333;color:#fff;padding:15px 20px;border:none;border-radius:10px;font-size:1.2rem;margin:5px;">💀 Classic</button>
+            <button id="modeZen" style="background:#333;color:#fff;padding:15px 20px;border:none;border-radius:10px;font-size:1.2rem;margin:5px;">🧘 Zen</button>
         </div>
+        <div id="startBtn" style="background:#00ff88;color:#1a1a2e;padding:25px 60px;font-size:2rem;border-radius:15px;font-weight:bold;">START GAME</div>
     </div>
 
     <!-- Game Over Modal -->
@@ -596,11 +580,6 @@
         let difficulty = 'normal'; // easy, normal, hard
         let difficultySpeed = { easy: 150, normal: 100, hard: 60 };
         
-        function selectDifficulty(diff, btn) {
-            difficulty = diff;
-            document.querySelectorAll('.mode-btn[data-diff]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
         let lastEatTime = 0;
         let comboCount = 0;
         let comboMultiplier = 1;
@@ -669,18 +648,16 @@
             return 'none';
         }
 
-        function selectMode(mode, btn) {
+        function selectMode(mode) {
             gameMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
             
-            // Update hint text
-            const hints = {
-                'timer': '⏱️ Timer: 60s to score as high as you can!',
-                'classic': '💀 Classic: No timer, die on wall/self collision!',
-                'zen': '🧘 Zen: No death, just relax and grow!'
-            };
-            document.getElementById('modeHint').textContent = hints[mode];
+            // Update button styles
+            document.getElementById('modeTimer').style.background = mode === 'timer' ? '#00ff88' : '#333';
+            document.getElementById('modeTimer').style.color = mode === 'timer' ? '#1a1a2e' : '#fff';
+            document.getElementById('modeClassic').style.background = mode === 'classic' ? '#00ff88' : '#333';
+            document.getElementById('modeClassic').style.color = mode === 'classic' ? '#1a1a2e' : '#fff';
+            document.getElementById('modeZen').style.background = mode === 'zen' ? '#00ff88' : '#333';
+            document.getElementById('modeZen').style.color = mode === 'zen' ? '#1a1a2e' : '#fff';
         }
 
         function showScorePopup(x, y, points, combo) {
@@ -993,10 +970,17 @@
             showStartModal();
         }
         
+        // Initialize buttons when page loads
+        window.onload = function() {
+            document.getElementById('startBtn').addEventListener('click', startGame);
+            document.getElementById('startBtn').addEventListener('touchstart', startGame);
+            document.getElementById('modeTimer').addEventListener('click', function() { selectMode('timer'); });
+            document.getElementById('modeClassic').addEventListener('click', function() { selectMode('classic'); });
+            document.getElementById('modeZen').addEventListener('click', function() { selectMode('zen'); });
+        };
+        
         function startGame() {
-            const input = document.getElementById('playerNameInput');
-            const name = input ? (input.value.trim() || 'Anonymous') : 'Player';
-            playerName = name;
+            playerName = 'Player';
             
             const startModal = document.getElementById('startModal');
             if (startModal) {
