@@ -520,25 +520,27 @@
         <p>Press <kbd>Space</kbd> to pause</p>
     </div>
 
-    <!-- Start Modal - simplified for mobile -->
+    <!-- Start Modal - super simple -->
     <div id="startModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a2e;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <h2 style="color:#00ff88;font-size:2.5rem;margin-bottom:10px;">🐍 HENTAI SNAKE</h2>
-        <div style="margin:20px 0;">
-            <button id="modeTimer" style="background:#00ff88;color:#1a1a2e;padding:15px 20px;border:none;border-radius:10px;font-size:1.2rem;margin:5px;">⏱️ Timer</button>
-            <button id="modeClassic" style="background:#333;color:#fff;padding:15px 20px;border:none;border-radius:10px;font-size:1.2rem;margin:5px;">💀 Classic</button>
-            <button id="modeZen" style="background:#333;color:#fff;padding:15px 20px;border:none;border-radius:10px;font-size:1.2rem;margin:5px;">🧘 Zen</button>
+        <h2 style="color:#00ff88;font-size:2.5rem;">🐍 SNAKE</h2>
+        
+        <p style="color:#888;margin:15px 0;">Select Mode:</p>
+        
+        <div style="margin:10px 0;">
+            <button onclick="gameMode='timer';this.style.background='#00ff88';this.style.color='#1a1a2e';document.getElementById('modeClassic').style.background='#333';document.getElementById('modeClassic').style.color='#fff';document.getElementById('modeZen').style.background='#333';document.getElementById('modeZen').style.color='#fff';" id="modeTimer" style="background:#00ff88;color:#1a1a2e;padding:12px 20px;border:none;border-radius:8px;font-size:1rem;margin:3px;">⏱️ Timer</button>
+            <button onclick="gameMode='classic';this.style.background='#00ff88';this.style.color='#1a1a2e';document.getElementById('modeTimer').style.background='#333';document.getElementById('modeTimer').style.color='#fff';document.getElementById('modeZen').style.background='#333';document.getElementById('modeZen').style.color='#fff';" id="modeClassic" style="background:#333;color:#fff;padding:12px 20px;border:none;border-radius:8px;font-size:1rem;margin:3px;">💀 Classic</button>
+            <button onclick="gameMode='zen';this.style.background='#00ff88';this.style.color='#1a1a2e';document.getElementById('modeTimer').style.background='#333';document.getElementById('modeTimer').style.color='#fff';document.getElementById('modeClassic').style.background='#333';document.getElementById('modeClassic').style.color='#fff';" id="modeZen" style="background:#333;color:#fff;padding:12px 20px;border:none;border-radius:8px;font-size:1rem;margin:3px;">🧘 Zen</button>
         </div>
-        <div id="startBtn" style="background:#00ff88;color:#1a1a2e;padding:25px 60px;font-size:2rem;border-radius:15px;font-weight:bold;">START GAME</div>
+        
+        <button onclick="document.getElementById('startModal').style.display='none';initGame();" style="background:#00ff88;color:#1a1a2e;padding:20px 50px;font-size:1.5rem;border:none;border-radius:10px;font-weight:bold;margin-top:20px;">START</button>
     </div>
 
     <!-- Game Over Modal -->
-    <div class="overlay" id="overlay"></div>
-    <div class="message" id="gameOverModal">
-        <h2>🎮 GAME OVER!</h2>
-        <p style="font-size: 1.5rem; margin-bottom: 10px;">Score: <span id="finalScore">0</span></p>
-        <p id="highScoreMsg" style="color: #ffd700; margin-bottom: 20px; display: none;">🏆 New High Score!</p>
-        <button onclick="showStartModal()">Play Again</button>
-        <button onclick="closeToMenu()" style="margin-top: 10px; background: #666; color: white; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 10px; cursor: pointer;">✕ Close</button>
+    <div id="gameOverModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;flex-direction:column;align-items:center;justify-content:center;">
+        <h2 style="color:#ff4757;font-size:2rem;">GAME OVER</h2>
+        <p style="color:#fff;font-size:1.5rem;">Score: <span id="finalScore">0</span></p>
+        <button onclick="document.getElementById('gameOverModal').style.display='none';document.getElementById('startModal').style.display='flex';" style="background:#00ff88;color:#1a1a2e;padding:15px 30px;font-size:1.2rem;border:none;border-radius:8px;margin-top:15px;">Play Again</button>
+        <button onclick="document.getElementById('gameOverModal').style.display='none';document.getElementById('startModal').style.display='flex';" style="background:#666;color:#fff;padding:10px 20px;font-size:1rem;border:none;border-radius:8px;margin-top:10px;">✕ Menu</button>
     </div>
 
     <script>
@@ -960,26 +962,12 @@
         
         // ============ GAME ============
         function showStartModal() {
-            stopBgMusic(); // Stop music when returning to menu
+            stopBgMusic();
             document.getElementById('gameOverModal').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
             document.getElementById('startModal').style.display = 'flex';
-            loadLeaderboard();
         }
         
-        function closeToMenu() {
-            showStartModal();
-        }
-        
-        // Initialize buttons when page loads
-        window.onload = function() {
-            document.getElementById('startBtn').addEventListener('click', startGame);
-            document.getElementById('startBtn').addEventListener('touchstart', startGame);
-            document.getElementById('modeTimer').addEventListener('click', function() { selectMode('timer'); });
-            document.getElementById('modeClassic').addEventListener('click', function() { selectMode('classic'); });
-            document.getElementById('modeZen').addEventListener('click', function() { selectMode('zen'); });
-        };
-        
+        // ============ GAME ============
         function startGame() {
             playerName = 'Player';
             
@@ -2018,9 +2006,7 @@
             const isHighScore = scores.length < 10 || score > scores[scores.length - 1].score;
             
             document.getElementById('finalScore').textContent = score;
-            document.getElementById('highScoreMsg').style.display = isHighScore ? 'block' : 'none';
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('gameOverModal').style.display = 'block';
+            document.getElementById('gameOverModal').style.display = 'flex';
             
             // Save score
             await saveScore(playerName, score);
