@@ -376,7 +376,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.6</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.7</span></h1>
     <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
@@ -389,6 +389,8 @@
         <button class="color-btn" onclick="setSnakeColor('#ffd700')" style="background: #ffd700; border: 2px solid #ffd700; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
         <button class="color-btn" onclick="setSnakeColor('#9b59b6')" style="background: #9b59b6; border: 2px solid #9b59b6; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
         <button class="color-btn" onclick="setSnakeColor('#ff6b81')" style="background: #ff6b81; border: 2px solid #ff6b81; width: 25px; height: 25px; border-radius: 50%; cursor: pointer;"></button>
+        <span style="color: #888; margin-left: 20px; margin-right: 10px;">🔊</span>
+        <button id="musicBtn" onclick="toggleMusic()" style="background: rgba(0, 255, 136, 0.2); border: 2px solid #00ff88; color: #00ff88; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem;">🎵 Music: ON</button>
     </div>
     
     <div class="stats">
@@ -742,6 +744,61 @@
         
         // Sound effects using Web Audio API
         let audioCtx = null;
+        let musicEnabled = true;
+        let bgMusicOscillator = null;
+        let bgMusicGain = null;
+        
+        function toggleMusic() {
+            musicEnabled = !musicEnabled;
+            const btn = document.getElementById('musicBtn');
+            if (musicEnabled) {
+                btn.textContent = '🎵 Music: ON';
+                btn.style.background = 'rgba(0, 255, 136, 0.2)';
+                btn.style.color = '#00ff88';
+                startBgMusic();
+            } else {
+                btn.textContent = '🎵 Music: OFF';
+                btn.style.background = 'rgba(255, 100, 100, 0.2)';
+                btn.style.color = '#ff6464';
+                stopBgMusic();
+            }
+        }
+        
+        function startBgMusic() {
+            if (!musicEnabled || bgMusicOscillator) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create ambient drone
+                bgMusicOscillator = audioCtx.createOscillator();
+                bgMusicGain = audioCtx.createGain();
+                
+                bgMusicOscillator.type = 'sine';
+                bgMusicOscillator.frequency.setValueAtTime(110, audioCtx.currentTime); // A2
+                bgMusicGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+                
+                bgMusicOscillator.connect(bgMusicGain);
+                bgMusicGain.connect(audioCtx.destination);
+                bgMusicOscillator.start();
+                
+                // Add subtle modulation
+                const lfo = audioCtx.createOscillator();
+                const lfoGain = audioCtx.createGain();
+                lfo.frequency.setValueAtTime(0.5, audioCtx.currentTime);
+                lfoGain.gain.setValueAtTime(10, audioCtx.currentTime);
+                lfo.connect(lfoGain);
+                lfoGain.connect(bgMusicOscillator.frequency);
+                lfo.start();
+            } catch(e) {}
+        }
+        
+        function stopBgMusic() {
+            if (bgMusicOscillator) {
+                bgMusicOscillator.stop();
+                bgMusicOscillator = null;
+                bgMusicGain = null;
+            }
+        }
         
         function playSound(type) {
             try {
@@ -891,6 +948,7 @@
         
         // ============ GAME ============
         function showStartModal() {
+            stopBgMusic(); // Stop music when returning to menu
             document.getElementById('gameOverModal').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('startModal').style.display = 'flex';
@@ -904,6 +962,9 @@
             
             document.getElementById('playerName').textContent = playerName;
             document.getElementById('startModal').style.display = 'none';
+            
+            // Start background music
+            if (musicEnabled) startBgMusic();
             
             initGame();
         }
@@ -1642,6 +1703,7 @@
             if (gameLoop) clearInterval(gameLoop);
             if (timerLoop) clearInterval(timerLoop);
             playSound('gameOver');
+            stopBgMusic(); // Stop background music
             
             // Screen shake effect
             document.body.classList.add('shake');
