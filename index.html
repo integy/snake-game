@@ -987,43 +987,20 @@
         
         function initGame() {
             snake = [
-                { x: 10, y: 10 },
-                { x: 9, y: 10 },
-                { x: 8, y: 10 }
+                {x: 10, y: 10},
+                {x: 9, y: 10},
+                {x: 8, y: 10}
             ];
             dx = 1;
             dy = 0;
             score = 0;
-            currentSpeed = 100; // Fixed speed
-            particles = [];
-            comboCount = 0;
-            comboMultiplier = 1;
-            lastEatTime = 0;
-            gameLevel = 1;
-            obstacles = [];
-            extraLife = false;
-            
-            if (comboTimeout) clearTimeout(comboTimeout);
+            currentSpeed = 100;
             
             spawnFood();
             draw();
             
             if (gameLoop) clearInterval(gameLoop);
             gameLoop = setInterval(update, currentSpeed);
-            
-            // Timer for timer mode
-            if (timerLoop) clearInterval(timerLoop);
-            if (gameMode === 'timer') {
-                timeLeft = 60;
-                document.getElementById('timer').textContent = timeLeft;
-                timerLoop = setInterval(function() {
-                    if (!isPaused && !isGameOver) {
-                        timeLeft--;
-                        document.getElementById('timer').textContent = timeLeft;
-                        if (timeLeft <= 0) gameOver();
-                    }
-                }, 1000);
-            }
         }
         
         // Power-up system
