@@ -379,7 +379,7 @@
 </head>
 <body>
     <h1>🐍 SNAKE <span style="font-size: 0.5em; color: #00ff88;">v8.7</span></h1>
-    <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡ Chain | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
+    <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡ Chain | ✖️ 2X | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
@@ -986,6 +986,7 @@
         }
         
         function initGame() {
+            console.log('initGame called');
             snake = [
                 {x: 10, y: 10},
                 {x: 9, y: 10},
@@ -1035,8 +1036,12 @@
                 foodType = 'reverse'; // reverse controls for 5 seconds
             } else if (rand < 0.86) {
                 foodType = 'scissors'; // cut snake length!
-            } else if (rand < 0.87) {
+            } else if (rand < 0.88) {
+                foodType = 'scissors'; // cut snake length!
+            } else if (rand < 0.89) {
                 foodType = 'extraLife'; // extra life in classic mode!
+            } else if (rand < 0.90) {
+                foodType = 'doublePoints'; // 2x points for 10 seconds!
             } else {
                 // Power-up spawns instead of regular food occasionally
                 const powerRand = Math.random();
@@ -1213,6 +1218,38 @@
                 hint.textContent = originalHint;
                 hint.style.color = '';
                 document.getElementById('timer').parentElement.style.color = originalTimerColor || '';
+            }, duration);
+        }
+        
+        // Double Points function - 2x points for 10 seconds!
+        function activateDoublePoints() {
+            const duration = 10000; // 10 seconds
+            const hint = document.getElementById('modeHint');
+            const originalHint = hint.textContent;
+            
+            activeDoublePoints = true;
+            doublePointsEndTime = Date.now() + duration;
+            
+            // Show double points message
+            hint.textContent = '✖️ 2X POINTS ACTIVATED! (10s)';
+            hint.style.color = '#00ff00';
+            
+            // Create green particles
+            for (let i = 0; i < 20; i++) {
+                createParticles(snake[0].x, snake[0].y, '#00ff00');
+            }
+            
+            // Play sound
+            playSound('eatGold');
+            
+            // Screen shake
+            screenShake(0.5);
+            
+            // Reset after duration
+            setTimeout(() => {
+                activeDoublePoints = false;
+                hint.textContent = originalHint;
+                hint.style.color = '';
             }, duration);
         }
         
@@ -1514,6 +1551,10 @@
                             showScorePopup(food.x, food.y, 10, 1);
                         }
                         break;
+                    case 'doublePoints': // 2x points for 10 seconds!
+                        points = 15;
+                        activateDoublePoints();
+                        break;
                     case 'normal':
                     default:
                         points = 10;
@@ -1549,7 +1590,9 @@
                     document.getElementById('comboStat').style.display = 'none';
                 }, 2000);
                 
-                score += points * comboMultiplier;
+                // Apply double points multiplier if active
+                const doubleMultiplier = activeDoublePoints ? 2 : 1;
+                score += points * comboMultiplier * doubleMultiplier;
                 
                 // Check for level up (every 100 points)
                 const newLevel = Math.floor(score / 100) + 1;
@@ -1718,6 +1761,10 @@
                     foodColor = '#00ff00'; // Green - extra life
                     foodGlow = '#00ff00';
                     break;
+                case 'doublePoints':
+                    foodColor = '#00ff00'; // Green - 2x points
+                    foodGlow = '#00ff00';
+                    break;
                 case 'normal':
                 default:
                     foodColor = '#2ed573'; // Green - normal
@@ -1806,6 +1853,17 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('❤️', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
+            } else if (foodType === 'doublePoints') {
+                // Draw 2x points with multiplier symbol
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 1, 0, Math.PI * 2);
+                ctx.fill();
+                // Draw 2x symbol
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('✖️', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
             } else if (foodType.startsWith('power')) {
                 // Draw power-up with symbol
                 ctx.beginPath();
