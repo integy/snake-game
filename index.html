@@ -376,7 +376,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v8.1</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v8.2</span></h1>
     <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡ Chain | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
@@ -535,6 +535,15 @@
                 </div>
             </div>
             
+            <div style="margin-bottom: 20px;">
+                <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;">Select Difficulty:</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="mode-btn" onclick="selectDifficulty('easy', this)" data-diff="easy">🐢 Easy</button>
+                    <button class="mode-btn active" onclick="selectDifficulty('normal', this)" data-diff="normal">🔥 Normal</button>
+                    <button class="mode-btn" onclick="selectDifficulty('hard', this)" data-diff="hard">💀 Hard</button>
+                </div>
+            </div>
+            
             <button id="startBtn" onclick="startGame()">START GAME</button>
             
             <div class="leaderboard">
@@ -664,6 +673,14 @@
         let timeLeft = 60; // 60 second timer
         let timerLoop = null;
         let gameMode = 'timer'; // timer, classic, zen
+        let difficulty = 'normal'; // easy, normal, hard
+        let difficultySpeed = { easy: 150, normal: 100, hard: 60 };
+        
+        function selectDifficulty(diff, btn) {
+            difficulty = diff;
+            document.querySelectorAll('.mode-btn[data-diff]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
         let lastEatTime = 0;
         let comboCount = 0;
         let comboMultiplier = 1;
@@ -1127,7 +1144,7 @@
             dx = 1;
             dy = 0;
             score = 0;
-            currentSpeed = 100; // Reset speed
+            currentSpeed = difficultySpeed[difficulty]; // Reset speed based on difficulty
             particles = []; // Reset particles
             comboCount = 0;
             comboMultiplier = 1;
