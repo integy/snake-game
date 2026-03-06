@@ -376,7 +376,7 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.8</span></h1>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v7.9</span></h1>
     <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
@@ -392,6 +392,7 @@
         <span style="color: #888; margin-left: 20px; margin-right: 10px;">🔊</span>
         <button id="musicBtn" onclick="toggleMusic()" style="background: rgba(0, 255, 136, 0.2); border: 2px solid #00ff88; color: #00ff88; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem;">🎵 Music: ON</button>
         <button onclick="showHelp()" style="background: rgba(255, 200, 0, 0.2); border: 2px solid #ffc800; color: #ffc800; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; margin-left: 10px;">❓ Help</button>
+        <button onclick="showStats()" style="background: rgba(0, 200, 255, 0.2); border: 2px solid #00c8ff; color: #00c8ff; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; margin-left: 10px;">📊 Stats</button>
     </div>
     
     <div class="stats">
@@ -598,6 +599,34 @@
         </div>
     </div>
 
+    <!-- Stats Modal -->
+    <div class="modal-overlay" id="statsModal">
+        <div class="modal" style="max-width: 400px;">
+            <h2 style="color: #00c8ff; margin-bottom: 20px;">📊 我的統計</h2>
+            
+            <div style="text-align: left; color: #ccc; font-size: 1rem; line-height: 1.8;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0;">
+                    <span>🎮 遊戲場數</span>
+                    <span id="statGames" style="color: #00ff88; font-weight: bold;">0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0;">
+                    <span>🏆 最高分數</span>
+                    <span id="statHighScore" style="color: #ffd700; font-weight: bold;">0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0;">
+                    <span>📈 總分數</span>
+                    <span id="statTotalScore" style="color: #00ff88; font-weight: bold;">0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0;">
+                    <span>🍎 食物數量</span>
+                    <span id="statFoods" style="color: #00ff88; font-weight: bold;">0</span>
+                </div>
+            </div>
+            
+            <button onclick="closeStats()" style="margin-top: 20px; background: #00c8ff; color: #1a1a2e; border: none; padding: 15px 40px; font-size: 1.2rem; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: bold;">關閉</button>
+        </div>
+    </div>
+
     <script>
         // ============ CONFIG ============
         const API_BASE = 'https://api.jsonbin.io/v3/b';
@@ -651,6 +680,37 @@
         };
         let bombsHit = 0;
         let zenTime = 0;
+        
+        // Statistics system
+        let stats = {
+            gamesPlayed: 0,
+            totalScore: 0,
+            highScore: parseInt(localStorage.getItem('snakeHighScore') || '0'),
+            foodsEaten: 0,
+            totalTime: 0
+        };
+        
+        function loadStats() {
+            const saved = localStorage.getItem('snakeStats');
+            if (saved) {
+                stats = JSON.parse(saved);
+            }
+        }
+        
+        function saveStats() {
+            localStorage.setItem('snakeStats', JSON.stringify(stats));
+            if (score > stats.highScore) {
+                stats.highScore = score;
+                localStorage.setItem('snakeHighScore', score.toString());
+            }
+        }
+        
+        function updateStats() {
+            stats.gamesPlayed++;
+            stats.totalScore += score;
+            stats.foodsEaten += snake.length - 3;
+            saveStats();
+        }
         
         // Particle effects
         let particles = [];
@@ -1007,6 +1067,19 @@
         
         function closeHelp() {
             document.getElementById('helpModal').style.display = 'none';
+        }
+        
+        function showStats() {
+            loadStats();
+            document.getElementById('statGames').textContent = stats.gamesPlayed;
+            document.getElementById('statHighScore').textContent = stats.highScore;
+            document.getElementById('statTotalScore').textContent = stats.totalScore;
+            document.getElementById('statFoods').textContent = stats.foodsEaten;
+            document.getElementById('statsModal').style.display = 'flex';
+        }
+        
+        function closeStats() {
+            document.getElementById('statsModal').style.display = 'none';
         }
         
         function startGame() {
@@ -1776,6 +1849,9 @@
             if (timerLoop) clearInterval(timerLoop);
             playSound('gameOver');
             stopBgMusic(); // Stop background music
+            
+            // Update statistics
+            updateStats();
             
             // Screen shake effect
             document.body.classList.add('shake');
