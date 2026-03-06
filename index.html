@@ -519,7 +519,8 @@
     </div>
 
     <!-- Start Modal -->
-    <div class="modal-overlay" id="startModal">
+    <div class="modal-overlay" id="startModal" style="touch-action: manipulation;">
+        <div class="modal" style="max-width: 90%;">
         <div class="modal">
             <h2>🎮 Welcome!</h2>
             <p style="margin-bottom: 20px; color: #888;">Enter your name to play and compete on the leaderboard</p>
@@ -543,7 +544,7 @@
                 </div>
             </div>
             
-            <button id="startBtn" onclick="startGame()">START GAME</button>
+            <button id="startBtn" onclick="startGame(); return false;" ontouchend="startGame(); return false;">START GAME</button>
             
             <div class="leaderboard">
                 <h3>🏆 Top Players</h3>
@@ -1001,6 +1002,7 @@
         }
         
         function startGame() {
+            console.log('Starting game...');
             const input = document.getElementById('playerNameInput');
             const name = input.value.trim() || 'Anonymous';
             playerName = name;
