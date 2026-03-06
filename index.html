@@ -376,8 +376,8 @@
     </style>
 </head>
 <body>
-    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v8.0</span></h1>
-    <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
+    <h1>🐍 HENTAI SNAKE <span style="font-size: 0.5em; color: #00ff88;">v8.1</span></h1>
+    <div class="subtitle">🍏 Normal | 🔴 Red | 🔵 Blue | 🟡 Gold | 💣 Bomb | 🌀 Teleport | ❄️ Freeze | ⚡ Chain | ⚡🛡️🧲👻 | 🎯 Level Up!</div>
     <div class="subtitle" id="modeHint">⏱️ Timer: 60s to score as high as you can!</div>
     
     <!-- Snake Color Selector -->
@@ -1213,22 +1213,24 @@
         let timeFreezeInterval = null;
         
         function spawnFood() {
-            // Random food type: 40% normal, 15% red, 10% blue, 5% gold, 10% bomb, 5% teleport, 5% timefreeze, 10% power-up
+            // Random food type: 38% normal, 15% red, 10% blue, 5% gold, 10% bomb, 5% teleport, 5% timefreeze, 2% chain lightning, 10% power-up
             const rand = Math.random();
-            if (rand < 0.40) {
+            if (rand < 0.38) {
                 foodType = 'normal';
-            } else if (rand < 0.55) {
+            } else if (rand < 0.53) {
                 foodType = 'red'; // 2x points
-            } else if (rand < 0.65) {
+            } else if (rand < 0.63) {
                 foodType = 'blue'; // slow down
-            } else if (rand < 0.70) {
+            } else if (rand < 0.68) {
                 foodType = 'gold'; // 3x points + bonus
-            } else if (rand < 0.80) {
+            } else if (rand < 0.78) {
                 foodType = 'bomb'; // lose points + stun
-            } else if (rand < 0.85) {
+            } else if (rand < 0.83) {
                 foodType = 'teleport'; // teleport snake to random position
-            } else if (rand < 0.90) {
+            } else if (rand < 0.88) {
                 foodType = 'timeFreeze'; // freeze timer
+            } else if (rand < 0.90) {
+                foodType = 'chainLightning'; // collect all food!
             } else {
                 // Power-up spawns instead of regular food occasionally
                 const powerRand = Math.random();
@@ -1408,6 +1410,40 @@
             }, duration);
         }
         
+        // Chain Lightning function - collects all food on screen!
+        function activateChainLightning() {
+            const hint = document.getElementById('modeHint');
+            const originalHint = hint.textContent;
+            
+            // Show lightning message
+            hint.textContent = '⚡⚡⚡ CHAIN LIGHTNING! ⚡⚡⚡';
+            hint.style.color = '#ffff00';
+            
+            // Create lots of yellow particles
+            for (let i = 0; i < 50; i++) {
+                createParticles(snake[0].x, snake[0].y, '#ffff00');
+            }
+            
+            // Play lightning sound
+            playSound('eatGold');
+            
+            // Collect bonus points (simulate eating random food)
+            const bonusPoints = Math.floor(Math.random() * 30) + 20;
+            score += bonusPoints * comboMultiplier;
+            
+            // Show bonus popup
+            showScorePopup(snake[0].x, snake[0].y, bonusPoints * comboMultiplier, comboMultiplier);
+            
+            // Screen shake
+            screenShake(0.8);
+            
+            // Reset hint
+            setTimeout(() => {
+                hint.textContent = originalHint;
+                hint.style.color = '';
+            }, 1500);
+        }
+        
         function update() {
             if (isPaused || isGameOver) return;
             
@@ -1583,6 +1619,10 @@
                         points = 5;
                         activateTimeFreeze();
                         break;
+                    case 'chainLightning': // Chain Lightning!
+                        points = 0;
+                        activateChainLightning();
+                        break;
                     case 'normal':
                     default:
                         points = 10;
@@ -1754,6 +1794,10 @@
                     foodColor = '#00ffff'; // Cyan - time freeze
                     foodGlow = '#00ffff';
                     break;
+                case 'chainLightning':
+                    foodColor = '#ffff00'; // Yellow - chain lightning
+                    foodGlow = '#ffff00';
+                    break;
                 case 'powerSpeed':
                     foodColor = '#ff6b35'; // Orange - speed
                     foodGlow = '#ff6b35';
@@ -1812,6 +1856,17 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('❄️', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
+            } else if (foodType === 'chainLightning') {
+                // Draw chain lightning with zigzag
+                ctx.beginPath();
+                ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 1,.PI * 2 0, Math);
+                ctx.fill();
+                // Draw lightning symbol
+                ctx.fillStyle = '#000';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⚡', food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
             } else if (foodType.startsWith('power')) {
                 // Draw power-up with symbol
                 ctx.beginPath();
