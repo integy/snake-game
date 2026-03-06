@@ -105,18 +105,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 9999;
+            pointer-events: auto;
         }
 
         .modal {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 40px;
+            padding: 30px;
             border-radius: 20px;
             border: 3px solid #00ff88;
             text-align: center;
-            max-width: 400px;
-            width: 90%;
+            max-width: 350px;
+            width: 85%;
             box-shadow: 0 0 50px rgba(0, 255, 136, 0.3);
+            pointer-events: auto;
         }
 
         .modal h2 {
@@ -533,7 +535,7 @@
                 </div>
             </div>
             
-            <button id="startBtn" style="background: #00ff88; color: #1a1a2e; border: none; padding: 20px 50px; font-size: 1.5rem; border-radius: 15px; cursor: pointer; font-weight: bold; width: 100%; -webkit-tap-highlight-color: transparent;" ontouchend="this.click();">START GAME</button>
+            <a href="javascript:startGame()" style="display: block; background: #00ff88; color: #1a1a2e; border: none; padding: 20px; font-size: 1.5rem; border-radius: 15px; cursor: pointer; font-weight: bold; text-decoration: none; margin-top: 20px;">START GAME</a>
             
             <div class="leaderboard">
                 <h3>🏆 Top Players</h3>
