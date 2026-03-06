@@ -1772,9 +1772,13 @@
                     foodColor = '#2ed573'; // Green - normal
                     foodGlow = '#2ed573';
             }
+            // Dynamic pulse glow effect
+            const pulse = Math.sin(Date.now() / 150) * 0.4 + 0.6; // 0.2 to 1.0
+            const glowIntensity = 15 + pulse * 10;
+            
             ctx.fillStyle = foodColor;
             ctx.shadowColor = foodGlow;
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = glowIntensity;
             // Draw bomb as a square (danger!)
             if (foodType === 'bomb') {
                 ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
@@ -1878,6 +1882,46 @@
                 ctx.shadowBlur = index === 0 ? 15 : 5;
                 ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
                 ctx.shadowBlur = 0;
+                
+                // Add eyes to snake head
+                if (index === 0) {
+                    ctx.fillStyle = '#fff';
+                    const eyeSize = gridSize / 5;
+                    const eyeOffset = gridSize / 4;
+                    
+                    // Determine eye positions based on direction
+                    let eye1X, eye1Y, eye2X, eye2Y;
+                    if (dx === 1) { // moving right
+                        eye1X = part.x * gridSize + gridSize - eyeOffset;
+                        eye1Y = part.y * gridSize + eyeOffset;
+                        eye2X = part.x * gridSize + gridSize - eyeOffset;
+                        eye2Y = part.y * gridSize + gridSize - eyeOffset;
+                    } else if (dx === -1) { // moving left
+                        eye1X = part.x * gridSize + eyeOffset;
+                        eye1Y = part.y * gridSize + eyeOffset;
+                        eye2X = part.x * gridSize + eyeOffset;
+                        eye2Y = part.y * gridSize + gridSize - eyeOffset;
+                    } else if (dy === 1) { // moving down
+                        eye1X = part.x * gridSize + eyeOffset;
+                        eye1Y = part.y * gridSize + gridSize - eyeOffset;
+                        eye2X = part.x * gridSize + gridSize - eyeOffset;
+                        eye2Y = part.y * gridSize + gridSize - eyeOffset;
+                    } else { // moving up or default
+                        eye1X = part.x * gridSize + eyeOffset;
+                        eye1Y = part.y * gridSize + eyeOffset;
+                        eye2X = part.x * gridSize + gridSize - eyeOffset;
+                        eye2Y = part.y * gridSize + eyeOffset;
+                    }
+                    
+                    ctx.fillRect(eye1X - eyeSize/2, eye1Y - eyeSize/2, eyeSize, eyeSize);
+                    ctx.fillRect(eye2X - eyeSize/2, eye2Y - eyeSize/2, eyeSize, eyeSize);
+                    
+                    // Pupils
+                    ctx.fillStyle = '#000';
+                    const pupilSize = eyeSize / 2;
+                    ctx.fillRect(eye1X - pupilSize/2, eye1Y - pupilSize/2, pupilSize, pupilSize);
+                    ctx.fillRect(eye2X - pupilSize/2, eye2Y - pupilSize/2, pupilSize, pupilSize);
+                }
             });
             ctx.globalAlpha = 1.0;
         }
