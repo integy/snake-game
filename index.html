@@ -60,6 +60,24 @@
             border-radius: 10px;
             box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
             background: #0a0a15;
+            transition: transform 0.05s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5px, -3px); }
+            20% { transform: translate(5px, 3px); }
+            30% { transform: translate(-4px, 4px); }
+            40% { transform: translate(4px, -4px); }
+            50% { transform: translate(-3px, 3px); }
+            60% { transform: translate(3px, -3px); }
+            70% { transform: translate(-2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            90% { transform: translate(-1px, 1px); }
+        }
+        
+        .shake {
+            animation: shake 0.3s ease-in-out;
         }
 
         .controls {
@@ -537,6 +555,28 @@
         
         // Particle effects
         let particles = [];
+        
+        // Screen shake effect
+        let shakeIntensity = 0;
+        
+        function screenShake(intensity) {
+            shakeIntensity = intensity;
+            const canvas = document.getElementById('gameCanvas');
+            canvas.classList.add('shake');
+            setTimeout(() => {
+                canvas.classList.remove('shake');
+                shakeIntensity = 0;
+            }, 300);
+        }
+        
+        function applyShake() {
+            if (shakeIntensity > 0) {
+                const offsetX = (Math.random() - 0.5) * shakeIntensity * 10;
+                const offsetY = (Math.random() - 0.5) * shakeIntensity * 10;
+                return `translate(${offsetX}px, ${offsetY}px)`;
+            }
+            return 'none';
+        }
 
         function selectMode(mode, btn) {
             gameMode = mode;
@@ -1011,6 +1051,7 @@
                 const oldHead = { ...snake[0] };
                 snake[0].x = newX;
                 snake[0].y = newY;
+                screenShake(0.6); // Teleport shake!
                 
             }, 150);
             
@@ -1165,10 +1206,12 @@
                         break;
                     case 'gold': // 3x points + bonus
                         points = 30;
+                        screenShake(0.5); // Medium shake for gold!
                         break;
                     case 'bomb': // Lose points + stun!
                         points = -20;
                         speedMultiplier = 2; // Slow down a lot
+                        screenShake(1); // Big shake for bomb!
                         // Stun the snake for 1 second
                         const savedDx = dx;
                         const savedDy = dy;
@@ -1242,6 +1285,7 @@
                 if (newLevel > gameLevel) {
                     gameLevel = newLevel;
                     document.getElementById('level').textContent = gameLevel;
+                    screenShake(0.8); // Level up shake!
                     
                     // Level up effects
                     const hint = document.getElementById('modeHint');
