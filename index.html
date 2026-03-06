@@ -561,6 +561,7 @@
         <p style="font-size: 1.5rem; margin-bottom: 10px;">Score: <span id="finalScore">0</span></p>
         <p id="highScoreMsg" style="color: #ffd700; margin-bottom: 20px; display: none;">🏆 New High Score!</p>
         <button onclick="showStartModal()">Play Again</button>
+        <button onclick="closeToMenu()" style="margin-top: 10px; background: #666; color: white; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 10px; cursor: pointer;">✕ Close</button>
     </div>
 
     <script>
@@ -993,6 +994,10 @@
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('startModal').style.display = 'flex';
             loadLeaderboard();
+        }
+        
+        function closeToMenu() {
+            showStartModal();
         }
         
         function startGame() {
@@ -1903,8 +1908,9 @@
         document.addEventListener('keydown', (e) => {
             // Close modals with ESC
             if (e.key === 'Escape') {
-                closeHelp();
-                closeStats();
+                if (document.getElementById('gameOverModal').style.display === 'block') {
+                    showStartModal();
+                }
                 return;
             }
             
